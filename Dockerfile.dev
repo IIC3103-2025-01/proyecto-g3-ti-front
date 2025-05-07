@@ -1,0 +1,18 @@
+# Dockerfile.dev
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copia package.json y package-lock.json (o yarn.lock)
+COPY package*.json ./
+
+# Instala todas las dependencias (incluyendo devDependencies)
+RUN npm install
+
+# No es necesario copiar el resto del código fuente (COPY . .)
+# si estás usando un volumen en docker-compose.yml que mapea todo el proyecto.
+# El código fuente vendrá del volumen.
+
+# El puerto se expone/mapea en docker-compose.yml
+# El comando se ejecuta desde docker-compose.yml
+EXPOSE 5173

@@ -2,5 +2,9 @@ node_modules
 dist
 .git
 .gitignore
-npm-debug.log*
+npm-debug.log
 .DS_Store
+Dockerfile
+Dockerfile.dev
+.dockerignore
+build

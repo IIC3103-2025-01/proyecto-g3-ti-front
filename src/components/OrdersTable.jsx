@@ -1,4 +1,7 @@
-import React from "react";
+import React from 'react';
+import Button from 'react-bootstrap/Button';
+import Table from 'react-bootstrap/Table';
+
 import { Link } from "react-router-dom";
 import { useApi } from "../hooks/useApi";
 

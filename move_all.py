@@ -1,7 +1,7 @@
 import time
 import httpx
 
-TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6MywiaWF0IjoxNzQ2NTU3NzIwLCJleHAiOjE3NDY1NTk1MjB9.3Ioy290wRbbuDVh7J9DWhjJelp0XoDajfthYmJ3XPP4"
+TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6MywiaWF0IjoxNzQ2NTYxMjgxLCJleHAiOjE3NDY1NjMwODF9.qUvJIvSiqcgBKnYgVuF9vwTC5eALq-z2ap3RfbK6XF8"
 BASE_URL = "https://dev.proyecto.2025-1.tallerdeintegracion.cl/starlink-factory"
 HEADERS = {"Authorization": TOKEN}
 
