@@ -5,7 +5,7 @@ export function useApi(
   endpoint,
   { 
     options = {},            // fetch options extra
-    pollingInterval = 0      // milisegundos entre peticiones (0 = no polling)
+    pollingInterval = 10000      // milisegundos entre peticiones (0 = no polling)
   } = {}
 ) {
   const [data,    setData]    = useState(null);
