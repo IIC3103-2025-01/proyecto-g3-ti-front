@@ -1,28 +1,63 @@
-import React from 'react';
-import Button from 'react-bootstrap/Button';
+import React from "react";
 import { useParams, Link } from "react-router-dom";
+import { Container, Card, Spinner, Alert, Button } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
 export default function OrderDetails() {
   const { id } = useParams();
-  const { data, loading, error } = useApi(`/api/orders?skip=0&limit=100`);
+  const { data, loading, error } = useApi(
+    `/api/orders?skip=0&limit=100`
+  );
 
-  if (loading) return <p>Cargando detalles…</p>;
+  if (loading) {
+    return (
+      <div className="text-center py-4">
+        <Spinner animation="border" role="status" />
+      </div>
+    );
+  }
+  if (error) {
+    return <Alert variant="danger">Error: {error}</Alert>;
+  }
+
   const order = data.orders.find((o) => o.order_id === id);
-  if (!order) return <p>Pedido no encontrado</p>;
+  if (!order) {
+    return <Alert variant="warning">Pedido no encontrado</Alert>;
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      <h2 className="text-3xl font-bold">{order.order_id}</h2>
-      <p><strong>Cliente:</strong> {order.client}</p>
-      <p><strong>Proveedor:</strong> {order.supplier}</p>
-      <p><strong>Canal:</strong> {order.channel}</p>
-      <p><strong>Estado:</strong> {order.status}</p>
-      <p><strong>Payload completo:</strong></p>
-      <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(order.payload, null, 2)}</pre>
-      <Link to="/" className="text-indigo-600 hover:text-indigo-800">
-        ← Volver
-      </Link>
-    </div>
+    <Container className="py-4">
+      <Card className="shadow-sm border-primary">
+        <Card.Body>
+          <Card.Title as="h2" className="h4 mb-3">
+            {order.order_id}
+          </Card.Title>
+
+          <Card.Text>
+            <strong>Cliente:</strong> {order.client}
+          </Card.Text>
+          <Card.Text>
+            <strong>Proveedor:</strong> {order.supplier}
+          </Card.Text>
+          <Card.Text>
+            <strong>Canal:</strong> {order.channel}
+          </Card.Text>
+          <Card.Text>
+            <strong>Estado:</strong> {order.status}
+          </Card.Text>
+
+          <Card.Text>
+            <strong>Payload completo:</strong>
+          </Card.Text>
+          <pre className="bg-light p-3 rounded">
+            {JSON.stringify(order.payload, null, 2)}
+          </pre>
+
+          <Button variant="link" as={Link} to="/">
+            ← Volver
+          </Button>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }
