@@ -5,9 +5,7 @@ import { useApi } from "../hooks/useApi";
 
 export default function OrderDetails() {
   const { id } = useParams();
-  const { data, loading, error } = useApi(
-    `/api/orders?skip=0&limit=100`
-  );
+  const { data, loading, error } = useApi(`/api/orders?skip=0&limit=100`);
 
   if (loading) {
     return (
@@ -27,7 +25,7 @@ export default function OrderDetails() {
 
   return (
     <Container className="py-4">
-      <Card className="shadow-sm border-primary">
+      <Card>
         <Card.Body>
           <Card.Title as="h2" className="h4 mb-3">
             {order.order_id}

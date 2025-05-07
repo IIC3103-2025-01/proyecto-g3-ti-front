@@ -1,57 +1,72 @@
-// src/hooks/useApi.js - VERSIÓN CORREGIDA
-import { useEffect, useState } from "react";
+// src/hooks/useApi.js
+import { useEffect, useState, useRef } from "react";
 
-export function useApi(endpoint, options = {}) {
-  const [data, setData] = useState(null);
+export function useApi(
+  endpoint,
+  { 
+    options = {},            // fetch options extra
+    pollingInterval = 0      // milisegundos entre peticiones (0 = no polling)
+  } = {}
+) {
+  const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error,   setError]   = useState(null);
+  // guardamos el último controller para abortar
+  const controllerRef = useRef(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null); // Limpia errores anteriores
-    setData(null);  // Limpia datos anteriores mientras carga
+    let intervalId;
 
-    // --- CAMBIO PRINCIPAL AQUÍ ---
-    // Llama solo al 'endpoint'. Asume que 'endpoint' ya viene como "/api/..."
-    fetch(endpoint, {
-    // ---------------------------
-      ...options,
-      headers: {
-        accept: "application/json",
-        ...(options.headers || {}),
-      },
-    })
-      .then((res) => {
+    const fetchData = async () => {
+      // abort anterior si existe
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(endpoint, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            ...(options.headers || {}),
+          },
+          ...options,
+        });
+
         if (!res.ok) {
-          // Intenta obtener más detalles del error si es posible
-          return res.text().then(text => {
-             let errorMsg = `Error ${res.status} (${res.statusText})`;
-             try {
-               // Intenta parsear si la respuesta es JSON con error
-               const jsonError = JSON.parse(text);
-               errorMsg += `: ${jsonError.detail || text}`;
-             } catch (e) {
-               errorMsg += `: ${text}`; // Si no es JSON, muestra el texto
-             }
-             throw new Error(errorMsg);
-          });
+          const text = await res.text();
+          throw new Error(`Error ${res.status}: ${text || res.statusText}`);
         }
-        // Si la respuesta es OK pero no tiene contenido (ej. 204)
-        if (res.status === 204 || res.headers.get('content-length') === '0') {
-            return null; // O un objeto vacío {}, dependiendo de lo que esperes
+        const json = res.status === 204 ? null : await res.json();
+        setData(json);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("useApi error:", err);
+          setError(err.message);
         }
-        return res.json(); // Procede a parsear JSON
-      })
-      .then((json) => setData(json))
-      .catch((err) => {
-          console.error(`Error fetching ${endpoint}:`, err); // Loguea el error para depuración
-          setError(err.message || 'Ocurrió un error desconocido');
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // La dependencia 'endpoint' está bien. Si 'options' cambia y debe disparar un re-fetch,
-  // necesitarías una estrategia para incluirlo sin causar bucles infinitos (ej. useMemo o serialización)
-  }, [endpoint]);
+    // primer fetch
+    fetchData();
+
+    // setInterval solo si pollingInterval >0
+    if (pollingInterval > 0) {
+      intervalId = setInterval(fetchData, pollingInterval);
+    }
+
+    return () => {
+      // cleanup al desmontar o cambiar endpoint/interval
+      if (controllerRef.current) controllerRef.current.abort();
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [endpoint, pollingInterval]); // depende también de pollingInterval
 
   return { data, loading, error };
 }
