@@ -39,10 +39,7 @@ export default function OrdersTable() {
                   "Actualizado",
                   "Detalle",
                 ].map((h) => (
-                  <th
-                    key={h}
-                    className="px-2 py-2 text-start text-nowrap"
-                  >
+                  <th key={h} className="px-2 py-2 text-start text-nowrap">
                     {h}
                   </th>
                 ))}
@@ -51,32 +48,23 @@ export default function OrdersTable() {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="text-center text-muted py-3"
-                  >
+                  <td colSpan="8" className="text-center text-muted py-3">
                     No hay pedidos.
                   </td>
                 </tr>
               ) : (
                 orders.map((o) => (
                   <tr key={o.order_id} className="align-middle">
-                    <td className="px-2 py-2 text-nowrap">
-                      {o.order_id}
-                    </td>
+                    <td className="px-2 py-2 text-nowrap">{o.order_id}</td>
                     <td className="px-2 py-2">{o.client}</td>
                     <td className="px-2 py-2">{o.supplier}</td>
                     <td className="px-2 py-2">{o.channel}</td>
                     <td className="px-2 py-2">{o.status}</td>
                     <td className="px-2 py-2 text-nowrap">
-                      {new Date(
-                        o.payload.createdAt
-                      ).toLocaleString()}
+                      {new Date(o.payload.createdAt).toLocaleString()}
                     </td>
                     <td className="px-2 py-2 text-nowrap">
-                      {new Date(
-                        o.payload.updatedAt
-                      ).toLocaleString()}
+                      {new Date(o.payload.updatedAt).toLocaleString()}
                     </td>
                     <td className="px-2 py-2">
                       <Link

@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Container, Navbar } from "react-bootstrap";
 
 import MetricsDashboard from "./components/MetricsDashboard";
-import OrdersTable       from "./components/OrdersTable";
-import OrderDetails      from "./components/OrderDetails";
+import OrdersTable from "./components/OrdersTable";
+import OrderDetails from "./components/OrderDetails";
 
 export default function App() {
   return (

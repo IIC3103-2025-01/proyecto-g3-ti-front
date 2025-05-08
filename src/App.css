@@ -19,7 +19,7 @@
   padding: 0;
 }
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -69,7 +69,8 @@ table {
   border-collapse: collapse;
   margin-top: 1rem;
 }
-th, td {
+th,
+td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
 }
@@ -118,7 +119,7 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .info-panel h3 {
   margin-top: 0;

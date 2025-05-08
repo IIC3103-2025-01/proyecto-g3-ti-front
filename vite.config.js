@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [
     // tailwind(),     // inyecta Tailwind y autoprefixer
-    react(),        // tu plugin de React
+    react(), // tu plugin de React
   ],
   server: {
     proxy: {
