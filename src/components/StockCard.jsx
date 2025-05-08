@@ -4,7 +4,7 @@ import { Card, ListGroup, Badge, Spinner, Alert } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
 export default React.memo(function StockCard({ spaces }) {
-  const { data, loading, error } = useApi("/api/stock_summary", {
+  const { data, loading, error } = useApi("/api/stock", {
     pollingInterval: 15000,
   });
 
