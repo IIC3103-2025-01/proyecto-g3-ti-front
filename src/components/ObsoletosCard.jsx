@@ -5,7 +5,7 @@ import { useApi } from "../hooks/useApi";
 
 export default React.memo(function ObsoletosCard() {
   const { data, loading, error } = useApi("/api/obsoletos", {
-    pollingInterval: 30000,
+    pollingInterval: 0,
   });
 
   if (loading)
