@@ -1,6 +1,7 @@
 // src/components/MetricsDashboard.jsx
 import React from "react";
 import { Row, Col, Spinner } from "react-bootstrap"; // <-- Spinner agregado
+import { POLLING } from "../config/polling";
 import SpacesCard from "./SpacesCard";
 import StockCard from "./StockCard";
 import ObsoletosCard from "./ObsoletosCard";

@@ -1,11 +1,12 @@
 // src/components/StockSummary.jsx
 import React from "react";
 import { Card, ListGroup, Badge, Spinner, Alert } from "react-bootstrap";
+import { POLLING } from "../config/polling";
 import { useApi } from "../hooks/useApi";
 
 export default function StockSummary({ spaces }) {
   const { data, loading, error } = useApi("/api/stock", {
-    pollingInterval: 10000,
+    pollingInterval: POLLING.STOCK,
   });
 
   if (loading) {

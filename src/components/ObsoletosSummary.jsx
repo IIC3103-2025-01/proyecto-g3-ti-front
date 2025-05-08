@@ -1,11 +1,12 @@
 // src/components/ObsoletosSummary.jsx
 import React from "react";
 import { ListGroup, Badge, Spinner, Alert, Card } from "react-bootstrap";
+import { POLLING } from "../config/polling";
 import { useApi } from "../hooks/useApi";
 
 export default function ObsoletosSummary() {
   const { data, loading, error } = useApi("/api/obsoletos", {
-    pollingInterval: 10000, // polling cada 30s
+    pollingInterval: POLLING.OBSOLETOS,
   });
 
   if (loading) {

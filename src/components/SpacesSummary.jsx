@@ -1,11 +1,12 @@
 // src/components/SpacesSummary.jsx
 import React from "react";
 import { ListGroup, Badge, Spinner, Alert } from "react-bootstrap";
+import { POLLING } from "../config/polling";
 import { useApi } from "../hooks/useApi";
 
 export default function SpacesSummary() {
   const { data, loading, error } = useApi("/api/spaces", {
-    pollingInterval: 10000, // polling
+    pollingInterval: POLLING.SPACES,
   });
 
   if (loading) {
