@@ -5,7 +5,7 @@ export function useApi(
   endpoint,
   {
     options = {}, // fetch options extra
-    pollingInterval = 10000, // ms entre peticiones (0 = no polling)
+    pollingInterval = 0, // ms entre peticiones (0 = no polling)
     incremental = false, // si true, añade `?since=` para traer sólo cambios
     mergeData = (prev, next) => next, // función para combinar prev + next
   } = {}
