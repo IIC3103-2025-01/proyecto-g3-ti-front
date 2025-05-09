@@ -72,7 +72,7 @@ export default function PedidosTable() {
                     </td>
                     <td className="px-2 py-2">
                       <Link
-                        to={`/pedido/${p.id}`}
+                        to={`/pedido/${p.request_id}`}
                         className="text-decoration-none"
                       >
                         Ver más

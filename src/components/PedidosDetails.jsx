@@ -5,8 +5,8 @@ import { Card, Table, Spinner, Alert, ListGroup } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
 export default function PedidosDetails() {
-  const { id } = useParams(); // recoge /pedido/:id
-  const { data, loading, error } = useApi(`/api/pedidos/${id}`, {
+  const { request_id } = useParams(); // recoge /pedido/:id
+  const { data, loading, error } = useApi(`/api/pedidos/${request_id}`, {
     pollingInterval: 0,
   });
 
@@ -23,7 +23,7 @@ export default function PedidosDetails() {
   if (!data) {
     return (
       <Alert variant="warning">
-        Pedido con ID <strong>{id}</strong> no encontrado.
+        Pedido con ID <strong>{request_id}</strong> no encontrado.
       </Alert>
     );
   }
@@ -36,7 +36,7 @@ export default function PedidosDetails() {
     <Card className="shadow-sm border-secondary mt-4">
       <Card.Body>
         <Card.Title as="h2" className="h5 mb-3">
-          Detalles del Pedido #{p.id}
+          Detalles del Pedido #{p.request_id}
         </Card.Title>
 
         <Table bordered size="sm" className="mb-3">
