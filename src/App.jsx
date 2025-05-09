@@ -5,6 +5,9 @@ import { Container, Navbar } from "react-bootstrap";
 import MetricsDashboard from "./components/MetricsDashboard";
 import OrdersTable from "./components/OrdersTable";
 import OrderDetails from "./components/OrderDetails";
+import PedidosTable from "./components/PedidosTable";
+import OrdersPerHourCard from "./components/OrdersPerHour";
+import PedidosDetails from "./components/PedidosDetails";
 
 export default function App() {
   return (
@@ -22,6 +25,12 @@ export default function App() {
             element={
               <>
                 <MetricsDashboard />
+                <div className="mt-4">
+                  <OrdersPerHourCard />
+                </div>
+                <div className="mt-4">
+                  <PedidosTable />
+                </div>
                 <div className="mt-4">
                   <OrdersTable />
                 </div>

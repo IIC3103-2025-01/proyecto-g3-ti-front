@@ -39,7 +39,9 @@ export default function ObsoletosSummary() {
           className="d-flex justify-content-between px-0 py-1"
         >
           <span>{sku}</span>
-          <Badge bg="secondary">{items.length} unidades</Badge>
+          <Badge bg="secondary">
+            {items.length} {items.length === 1 ? "unidad" : "unidades"}
+          </Badge>
         </ListGroup.Item>
       ))}
     </ListGroup>

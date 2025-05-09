@@ -1,58 +1,58 @@
+// src/components/PedidosDetails.jsx
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { Container, Card, Spinner, Alert, Button } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
-export default function OrderDetails() {
+export default function PedidosDetails() {
   const { id } = useParams();
-  const { data, loading, error } = useApi(`/api/orders?skip=0&limit=100`);
+  const {
+    data: pedido,
+    loading,
+    error,
+  } = useApi(`/api/pedidos/${id}`, {
+    pollingInterval: 0,
+  });
 
-  if (loading) {
+  if (loading)
     return (
       <div className="text-center py-4">
         <Spinner animation="border" role="status" />
       </div>
     );
-  }
-  if (error) {
-    return <Alert variant="danger">Error: {error}</Alert>;
-  }
-
-  const order = data.orders.find((o) => o.order_id === id);
-  if (!order) {
-    return <Alert variant="warning">Pedido no encontrado</Alert>;
-  }
+  if (error) return <Alert variant="danger">Error: {error}</Alert>;
+  if (!pedido) return <Alert variant="warning">Pedido no encontrado</Alert>;
 
   return (
     <Container className="py-4">
       <Card>
         <Card.Body>
           <Card.Title as="h2" className="h4 mb-3">
-            {order.order_id}
+            Pedido #{pedido.id}
           </Card.Title>
 
           <Card.Text>
-            <strong>Cliente:</strong> {order.client}
+            <strong>Request ID:</strong> {pedido.request_id}
           </Card.Text>
           <Card.Text>
-            <strong>Proveedor:</strong> {order.supplier}
+            <strong>SKU:</strong> {pedido.sku}
           </Card.Text>
           <Card.Text>
-            <strong>Canal:</strong> {order.channel}
+            <strong>Cantidad:</strong> {pedido.quantity}
           </Card.Text>
           <Card.Text>
-            <strong>Estado:</strong> {order.status}
+            <strong>Estado:</strong> {pedido.status}
           </Card.Text>
 
           <Card.Text>
-            <strong>Payload completo:</strong>
+            <strong>Detalles completos:</strong>
           </Card.Text>
           <pre className="bg-light p-3 rounded">
-            {JSON.stringify(order.payload, null, 2)}
+            {JSON.stringify(pedido, null, 2)}
           </pre>
 
-          <Button variant="link" as={Link} to="/">
-            ← Volver
+          <Button variant="link" as={Link} to="/pedidos">
+            ← Volver a Pedidos
           </Button>
         </Card.Body>
       </Card>

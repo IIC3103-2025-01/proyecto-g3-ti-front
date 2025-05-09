@@ -1,10 +1,13 @@
+// src/components/PedidosTable.jsx
 import React from "react";
 import { Card, Table, Spinner, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useApi } from "../hooks/useApi";
 
-export default function OrdersTable() {
-  const { data, loading, error } = useApi("/api/orders?skip=0&limit=10");
+export default function PedidosTable() {
+  const { data, loading, error } = useApi("/api/pedidos", {
+    pollingInterval: 0, // o el intervalo que prefieras
+  });
 
   if (loading) {
     return (
@@ -14,16 +17,17 @@ export default function OrdersTable() {
     );
   }
   if (error) {
-    return <Alert variant="danger">Error: {error}</Alert>;
+    return <Alert variant="danger">Error cargando pedidos: {error}</Alert>;
   }
 
-  const orders = data?.orders || [];
+  // la API devuelve { total, limit, offset, data: [ ... ] }
+  const pedidos = data?.data || [];
 
   return (
     <Card className="shadow-sm border-primary">
       <Card.Body>
         <Card.Title as="h2" className="h5 mb-3">
-          Últimas Ordenes
+          Últimos Pedidos (API Pedidos)
         </Card.Title>
         <div className="table-responsive">
           <Table striped hover className="mb-0">
@@ -31,12 +35,12 @@ export default function OrdersTable() {
               <tr>
                 {[
                   "ID",
-                  "Cliente",
-                  "Proveedor",
-                  "Canal",
+                  "Request ID",
+                  "SKU",
+                  "Cantidad",
                   "Estado",
                   "Creado",
-                  "Actualizado",
+                  "Recibido",
                   "Detalle",
                 ].map((h) => (
                   <th key={h} className="px-2 py-2 text-start text-nowrap">
@@ -46,29 +50,29 @@ export default function OrdersTable() {
               </tr>
             </thead>
             <tbody>
-              {orders.length === 0 ? (
+              {pedidos.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="text-center text-muted py-3">
                     No hay pedidos.
                   </td>
                 </tr>
               ) : (
-                orders.map((o) => (
-                  <tr key={o.order_id} className="align-middle">
-                    <td className="px-2 py-2 text-nowrap">{o.order_id}</td>
-                    <td className="px-2 py-2">{o.client}</td>
-                    <td className="px-2 py-2">{o.supplier}</td>
-                    <td className="px-2 py-2">{o.channel}</td>
-                    <td className="px-2 py-2">{o.status}</td>
+                pedidos.map((p) => (
+                  <tr key={p.id} className="align-middle">
+                    <td className="px-2 py-2 text-nowrap">{p.id}</td>
+                    <td className="px-2 py-2">{p.request_id}</td>
+                    <td className="px-2 py-2">{p.sku}</td>
+                    <td className="px-2 py-2">{p.quantity}</td>
+                    <td className="px-2 py-2">{p.status}</td>
                     <td className="px-2 py-2 text-nowrap">
-                      {new Date(o.payload.createdAt).toLocaleString()}
+                      {new Date(p.created_at).toLocaleString()}
                     </td>
                     <td className="px-2 py-2 text-nowrap">
-                      {new Date(o.payload.updatedAt).toLocaleString()}
+                      {new Date(p.received_at).toLocaleString()}
                     </td>
                     <td className="px-2 py-2">
                       <Link
-                        to={`/pedido/${o.order_id}`}
+                        to={`/pedido/${p.id}`}
                         className="text-decoration-none"
                       >
                         Ver más
