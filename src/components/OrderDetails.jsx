@@ -51,8 +51,8 @@ export default function PedidosDetails() {
             {JSON.stringify(pedido, null, 2)}
           </pre>
 
-          <Button variant="link" as={Link} to="/pedidos">
-            ← Volver a Pedidos
+          <Button variant="link" as={Link} to="/">
+            ← Volver atrás
           </Button>
         </Card.Body>
       </Card>
