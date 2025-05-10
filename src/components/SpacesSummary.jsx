@@ -16,11 +16,27 @@ export default function SpacesSummary() {
       </div>
     );
   }
-  if (error) {
-    return <Alert variant="danger">Error cargando espacios</Alert>;
+
+  // Too Many Requests
+  if (error?.startsWith?.("Error 429")) {
+    return (
+      <Alert variant="warning">
+        🍵 Demasiadas peticiones. Por favor espera unos segundos antes de
+        reintentar.
+      </Alert>
+    );
   }
 
-  // data.spaces viene de tu API original
+  // Internal Server Error
+  if (error?.startsWith?.("Error 500")) {
+    return <Alert variant="warning">🤨 Espera un momentito👌</Alert>;
+  }
+
+  // cualquier otro error
+  if (error) {
+    return <Alert variant="danger">Error cargando espacios: {error}</Alert>;
+  }
+
   const spaces = data?.spaces || [];
 
   return (

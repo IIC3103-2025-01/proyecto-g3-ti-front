@@ -17,8 +17,24 @@ export default function ObsoletosSummary() {
     );
   }
 
+  // Too Many Requests
+  if (error?.startsWith?.("Error 429")) {
+    return (
+      <Alert variant="warning">
+        🍵 Demasiadas peticiones. Por favor espera unos segundos antes de
+        reintentar.
+      </Alert>
+    );
+  }
+
+  // Internal Server Error
+  if (error?.startsWith?.("Error 500")) {
+    return <Alert variant="warning">🤨 Espera un momentito👌</Alert>;
+  }
+
+  // cualquier otro error
   if (error) {
-    return <Alert variant="danger">Error cargando obsoletos: {error}</Alert>;
+    return <Alert variant="danger">Error cargando espacios: {error}</Alert>;
   }
 
   const entries = Object.entries(data || {});
