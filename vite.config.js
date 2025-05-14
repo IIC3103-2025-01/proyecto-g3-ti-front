@@ -10,5 +10,6 @@ export default defineConfig({
   server: {
     host: true,  // allow external access (important for nginx proxying)
     port: 5173,
+    allowedHosts: ['starship3.ing.uc.cl'],
   },
 });
