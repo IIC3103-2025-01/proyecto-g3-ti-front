@@ -8,12 +8,7 @@ export default defineConfig({
     react(), // tu plugin de React
   ],
   server: {
-    proxy: {
-      "/api": {
-        target: "https://proyecto-g3-ti-1.onrender.com",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    host: true,  // allow external access (important for nginx proxying)
+    port: 5173,
   },
 });
