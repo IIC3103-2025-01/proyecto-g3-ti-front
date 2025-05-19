@@ -29,15 +29,15 @@ export default function App() {
                   <OrdersPerHourCard />
                 </div>
                 <div className="mt-4">
+                  <OrdersTable />
+                </div>
+                <div className="mt-4">
                   <PedidosTable />
                 </div>
-                {/* <div className="mt-4">
-                  <OrdersTable />
-                </div> */}
               </>
             }
           />
-          <Route path="/pedido/:id" element={<OrderDetails />} />
+          <Route path="/orden/:id" element={<OrderDetails />} />
         </Routes>
       </Container>
     </BrowserRouter>
