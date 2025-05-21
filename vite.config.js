@@ -1,19 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-// import tailwind from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [
-    // tailwind(),     // inyecta Tailwind y autoprefixer
-    react(), // tu plugin de React
-  ],
+  plugins: [react()],
   server: {
-    host: true, // allow external access (important for nginx proxying)
-    port: 5173,
-    allowedHosts: ["starship3.ing.uc.cl"],
+    host: "0.0.0.0", // escucha en todas las interfaces
+    port: 5173, // tu puerto actual
+    hmr: {
+      protocol: "wss", // fuerza WSS
+      host: "starship3.ing.uc.cl", // la URL pública de tu dev server
+      port: 443, // puerto HTTPS
+      clientPort: 443, // algunas versiones de Vite lo requieren
+    },
   },
 });
-
 // para probar la api a nivel local, usar el siguiente código:
 // si es necesario cambiar el puerteo, cambiar el 8000 por el que se va a utilizar:
 // vite.config.js
