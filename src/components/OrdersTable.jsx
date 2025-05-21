@@ -10,7 +10,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const BATCH_SIZE = 100;
 
 export default function OrdersTableEnhanced() {
@@ -33,10 +33,13 @@ export default function OrdersTableEnhanced() {
   useEffect(() => {
     async function init() {
       try {
-        const resp = await fetch(`${API_URL}/api/cargar-ordenes-sftp`, {
-          method: "POST",
-          headers: { Accept: "application/json" },
-        });
+        const resp = await fetch(
+          `https://starship3.ing.uc.cl/api/cargar-ordenes-sftp`,
+          {
+            method: "POST",
+            headers: { Accept: "application/json" },
+          }
+        );
         if (!resp.ok) throw new Error("Error al cargar órdenes SFTP");
         await fetchOrders(0);
       } catch (err) {
