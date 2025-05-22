@@ -8,6 +8,7 @@ RUN npm ci
 
 # 1.2 Copia el resto del código y build de Vite
 COPY . .
+COPY .env .env 
 RUN npm run build
 
 # 2. Production stage: servir con nginx

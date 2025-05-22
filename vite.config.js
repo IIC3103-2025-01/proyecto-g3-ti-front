@@ -1,16 +1,17 @@
+// vite.config.js
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "0.0.0.0", // escucha en todas las interfaces
-    port: 5173, // tu puerto actual
+    host: "0.0.0.0",
+    port: 5173,
     hmr: {
-      protocol: "wss", // fuerza WSS
-      host: "starship3.ing.uc.cl", // la URL pública de tu dev server
-      port: 443, // puerto HTTPS
-      clientPort: 443, // algunas versiones de Vite lo requieren
+      protocol: "wss",
+      host: "starship3.ing.uc.cl",
+      port: 443,
+      clientPort: 443,
     },
   },
 });

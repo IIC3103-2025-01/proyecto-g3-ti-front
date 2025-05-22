@@ -9,9 +9,9 @@ import {
   ButtonGroup,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { API_URL, BATCH_SIZE } from "../config/config";
 
-const API_URL = "https://starship3.ing.uc.cl";
-const BATCH_SIZE = 100;
+// const BATCH_SIZE = 100;
 
 export default function OrdersTableEnhanced() {
   const [orders, setOrders] = useState([]);
