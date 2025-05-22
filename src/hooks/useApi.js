@@ -1,6 +1,6 @@
 // src/hooks/useApi.js
 import { useEffect, useState, useRef } from "react";
-import { API_URL } from "~/config";
+import { API_URL, BATCH_SIZE } from "../config/config";
 
 export function useApi(
   path, // antes: "endpoint"
