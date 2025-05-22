@@ -2,27 +2,30 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  server: {
+  server: command === "serve" ? {
     host: "0.0.0.0",
     port: 5173,
-
-    // 1) DESACTIVA HMR para que no intente abrir ningún websocket
-    hmr: false,
-
-    // 2) Proxy para tus endpoints /api en desarrollo
+    hmr: {
+      protocol: "wss",
+      host: "starship3.ing.uc.cl",
+      port: 443,
+      clientPort: 443,
+    },
     proxy: {
-      "/api": {
-        target: "http://localhost:8000", // ajusta al host/puerto de tu backend
+      '/api': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        // si tu backend no usa el prefijo /api, podrías descomentar:
-        // rewrite: (path) => path.replace(/^\/api/, "")
-      },
-    },
-  },
-});
+      }
+    }
+  } : {
+    // al hacer `vite build` no habrá dev-server ni HMR
+    hmr: false
+  }
+}));
+
 
 
 // para probar la api a nivel local, usar el siguiente código:
