@@ -13,7 +13,19 @@ export default defineConfig({
       port: 443,
       clientPort: 443,
     },
-  },
+  proxy: {
+      // Cualquier llamada a /api/* se redirige a tu backend
+      '/api': {
+        target: 'http://localhost:8000',  // ajusta al host/puerto de tu API
+        changeOrigin: true,
+        secure: false,
+        // si tus endpoints usan WebSockets, descomenta:
+        // ws: true,
+        // (opcional) reescribe la ruta si tu backend no usa el prefijo
+        // rewrite: (path) => path.replace(/^\/api/, '')
+      }
+  }
+}
 });
 // para probar la api a nivel local, usar el siguiente código:
 // si es necesario cambiar el puerteo, cambiar el 8000 por el que se va a utilizar:
