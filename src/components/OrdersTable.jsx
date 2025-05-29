@@ -29,24 +29,13 @@ export default function OrdersTableEnhanced() {
     [orders]
   );
 
- // carga inicial
-  // useEffect(() => {
-  //   async function init() {
-  //     try {
-  //       const resp = await fetch(`${API_URL}/api/cargar-ordenes-sftp`, {
-  //         method: "POST",
-  //         headers: { Accept: "application/json" },
-  //       });
-  //       if (!resp.ok) throw new Error("Error al cargar órdenes SFTP");
-  //       await fetchOrders(0);
-  //     } catch (err) {
-  //       setError(err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  //   init();
-  // }, []);
+  // carga inicial
+  useEffect(() => {
+    setLoading(true);
+    fetchOrders(0)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
 
   // trae batch de órdenes
