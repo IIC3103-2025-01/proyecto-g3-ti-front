@@ -37,7 +37,6 @@ export default function OrdersTableEnhanced() {
       .finally(() => setLoading(false));
   }, []);
 
-
   // trae batch de órdenes
   const fetchOrders = async (newSkip) => {
     const resp = await fetch(
@@ -119,13 +118,13 @@ export default function OrdersTableEnhanced() {
   );
 
   return (
-    <Card className="shadow-sm border-primary">
+    <Card className="shadow-sm border-primary w-100">
       <Card.Body>
         <Card.Title as="h2" className="h5 mb-3">
           Últimas Órdenes
         </Card.Title>
 
-        <Form.Group className="mb-3 w-25">
+        <Form.Group className="mb-3" style={{ maxWidth: "300px" }}>
           <Form.Label>Filtrar por estado:</Form.Label>
           <Form.Select
             value={stateFilter}
@@ -141,7 +140,8 @@ export default function OrdersTableEnhanced() {
         </Form.Group>
 
         <div
-          style={{ maxHeight: 400, overflowY: "auto" }}
+          className="table-responsive"
+          style={{ maxHeight: "70vh", overflowY: "auto" }}
           ref={containerRef}
           onScroll={handleScroll}
         >
@@ -159,11 +159,9 @@ export default function OrdersTableEnhanced() {
                 {[
                   "SKU",
                   "ID",
-                  "Cliente",
-                  "Proveedor",
                   "Cantidad",
-                  "Estado",
-                  "Creada",
+                  "Estado de la Orden",
+                  "Estado Facturación",
                   "Acciones",
                 ].map((h) => (
                   <th key={h} className="px-2 py-2 text-start text-nowrap">
@@ -182,12 +180,10 @@ export default function OrdersTableEnhanced() {
                   >
                     <td className="px-2 py-2">{o.sku}</td>
                     <td className="px-2 py-2 text-nowrap">{o.id}</td>
-                    <td className="px-2 py-2">{o.cliente}</td>
-                    <td className="px-2 py-2">{o.proveedor}</td>
                     <td className="px-2 py-2">{o.cantidad}</td>
                     <td className="px-2 py-2">{o.estado}</td>
-                    <td className="px-2 py-2 text-nowrap">
-                      {new Date(o.creada).toLocaleString()}
+                    <td className="px-2 py-2">
+                      {o.facturado ? "Facturado" : "No facturado"}
                     </td>
                     <td className="px-2 py-2">
                       <ButtonGroup size="sm">
@@ -249,7 +245,7 @@ export default function OrdersTableEnhanced() {
                           </dd>
                           <dt className="col-sm-3">Facturado</dt>
                           <dd className="col-sm-9">
-                            {o.facturado ? "Sí" : "No"}
+                            {o.facturado ? "Facturado" : "No facturado"}
                           </dd>
                         </dl>
                         <div>
@@ -271,6 +267,59 @@ export default function OrdersTableEnhanced() {
                             </tbody>
                           </Table>
                         </div>
+                        {o.factura && o.factura.__values__ && (
+                          <Card className="mt-3">
+                            <Card.Header>Detalle de la Factura</Card.Header>
+                            <Card.Body>
+                              <dl className="row mb-0">
+                                <dt className="col-sm-4">ID</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.id}
+                                </dd>
+                                <dt className="col-sm-4">Cliente</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.client}
+                                </dd>
+                                <dt className="col-sm-4">Proveedor</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.supplier}
+                                </dd>
+                                <dt className="col-sm-4">Canal</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.channel}
+                                </dd>
+                                <dt className="col-sm-4">Estado</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.status}
+                                </dd>
+                                <dt className="col-sm-4">Precio</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.price}
+                                </dd>
+                                <dt className="col-sm-4">Interés</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.interest}
+                                </dd>
+                                <dt className="col-sm-4">Precio Total</dt>
+                                <dd className="col-sm-8">
+                                  {o.factura.__values__.totalPrice}
+                                </dd>
+                                <dt className="col-sm-4">Creada</dt>
+                                <dd className="col-sm-8">
+                                  {new Date(
+                                    o.factura.__values__.createdAt
+                                  ).toLocaleString()}
+                                </dd>
+                                <dt className="col-sm-4">Actualizada</dt>
+                                <dd className="col-sm-8">
+                                  {new Date(
+                                    o.factura.__values__.updatedAt
+                                  ).toLocaleString()}
+                                </dd>
+                              </dl>
+                            </Card.Body>
+                          </Card>
+                        )}
                       </td>
                     </tr>
                   )}

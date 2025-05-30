@@ -4,29 +4,26 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  server: command === "serve" ? {
-    host: "0.0.0.0",
-    port: 5173,
-    hmr: {
-      protocol: "wss",
-      host: "starship3.ing.uc.cl",
-      port: 443,
-      clientPort: 443,
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  } : {
-    // al hacer `vite build` no habrá dev-server ni HMR
-    hmr: false
-  }
+  server:
+    command === "serve"
+      ? {
+          host: "0.0.0.0",
+          port: 5173,
+          // Configuración HMR simplificada para desarrollo local
+          hmr: true,
+          proxy: {
+            "/api": {
+              target: "https://starship3.ing.uc.cl",
+              changeOrigin: true,
+              secure: true,
+            },
+          },
+        }
+      : {
+          // al hacer `vite build` no habrá dev-server ni HMR
+          hmr: false,
+        },
 }));
-
-
 
 // para probar la api a nivel local, usar el siguiente código:
 // si es necesario cambiar el puerteo, cambiar el 8000 por el que se va a utilizar:
