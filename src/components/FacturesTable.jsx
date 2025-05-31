@@ -1,58 +1,71 @@
+// src/components/FacturasTable.jsx
 import React, { useState } from "react";
 import { Card, Table, Spinner, Alert, Form, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config/config";
 
-// Convierte de "yyyy-mm-dd" a "dd-mm-yyyy"
+// yyyy-mm-dd → dd-mm-yyyy
 function formatDate(dateStr) {
   const [year, month, day] = dateStr.split("-");
   return `${day}-${month}-${year}`;
 }
 
 export default function FacturasTable() {
-  // Calculate default dates
+  const navigate = useNavigate();
+
+  // Rango por defecto: últimos 3 días
   const today = new Date();
   const todayFormatted = today.toISOString().split("T")[0];
-  const tenDaysAgo = new Date();
-  tenDaysAgo.setDate(today.getDate() - 3);
-  const tenDaysAgoFormatted = tenDaysAgo.toISOString().split("T")[0];
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(today.getDate() - 3);
+  const threeDaysAgoFormatted = threeDaysAgo.toISOString().split("T")[0];
 
   const [invoices, setInvoices] = useState([]);
-  const [fromDate, setFromDate] = useState(tenDaysAgoFormatted);
+  const [fromDate, setFromDate] = useState(threeDaysAgoFormatted);
   const [toDate, setToDate] = useState(todayFormatted);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
 
+  // track loading state per factura
+  const [navLoading, setNavLoading] = useState({});
+
+  // 1) Traer facturas
   const fetchInvoices = async () => {
+    console.log("🔍 fetchInvoices desde", fromDate, "hasta", toDate);
     if (!fromDate || !toDate) {
       setError("Debe seleccionar ambas fechas");
       return;
     }
     setLoading(true);
     setError(null);
+
     try {
-      const url = `${API_URL}/api/facturas-emitidas?fromDate=${formatDate(
-        fromDate
-      )}&toDate=${formatDate(toDate)}`;
-      const resp = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
-      if (!resp.ok) throw new Error("Error al obtener facturas");
+      const resp = await fetch(
+        `${API_URL}/api/facturas-emitidas?fromDate=${formatDate(
+          fromDate
+        )}&toDate=${formatDate(toDate)}`,
+        { headers: { Accept: "application/json" } }
+      );
+      console.log("📥 facturas-emitidas status:", resp.status);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      // Los datos se reciben como un array de arrays, así que los aplastamos
-      const flatInvoices = data.flat().map((item) => item.__values__);
-      setInvoices(flatInvoices);
+      console.log("📄 facturas recibidas:", data);
+      const flat = data.flat().map((item) => item.__values__);
+      setInvoices(flat);
+      console.log("✅ invoices state set con", flat.length, "registros");
     } catch (err) {
+      console.error("❌ fetchInvoices error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Altura aproximada de una fila de tabla (ajustar según necesidades)
-  const rowHeight = 48; // en píxeles
-  // Altura para mostrar aproximadamente 15 filas
+  // 2) Cuando el usuario hace click en "Ver Orden"
+
+  // estilos tabla
+  const rowHeight = 48;
   const tableHeight = 15 * rowHeight;
 
   return (
@@ -64,7 +77,7 @@ export default function FacturasTable() {
 
         <Button
           variant="secondary"
-          onClick={() => setShowFilter(!showFilter)}
+          onClick={() => setShowFilter((s) => !s)}
           className="mb-3"
         >
           {showFilter ? "Ocultar Filtro de Fechas" : "Mostrar Filtro de Fechas"}
@@ -99,7 +112,6 @@ export default function FacturasTable() {
             <Spinner animation="border" />
           </div>
         )}
-
         {error && <Alert variant="danger">{error}</Alert>}
 
         {!loading && !error && invoices.length > 0 && (
@@ -113,19 +125,14 @@ export default function FacturasTable() {
             <Table striped hover className="mb-0">
               <thead
                 className="table-light"
-                style={{
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 1,
-                  backgroundColor: "#f8f9fa", // Color similar a table-light
-                }}
+                style={{ position: "sticky", top: 0, zIndex: 1 }}
               >
                 <tr>
-                  <th>Fecha y hora de facturación</th>
-                  <th>id</th>
-                  <th>Monto factura</th>
-                  <th>Estado de pago</th>
-                  <th>Orden de Compra</th>
+                  <th>Fecha y hora</th>
+                  <th>ID Factura</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +143,12 @@ export default function FacturasTable() {
                     <td>{inv.totalPrice}</td>
                     <td>{inv.status}</td>
                     <td>
-                      <Link to={`/ordenes/${inv.id}`}>Ver Orden</Link>
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/order-details/${inv.id}`)}
+                      >
+                        Ver Orden
+                      </Button>
                     </td>
                   </tr>
                 ))}
