@@ -42,7 +42,7 @@ export default function App() {
             }
           />
           {/* <Route path="/orden/:id" element={<OrderDetails />} /> */}
-          <Route path="/order-details/:invoice_id" element={<OrderDetails />} />
+          <Route path="/order-details/:orden_id" element={<OrderDetails />} />
         </Routes>
       </Container>
     </BrowserRouter>

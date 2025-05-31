@@ -1,166 +1,170 @@
 // src/components/FacturasTable.jsx
-import React, { useState } from "react";
-import { Card, Table, Spinner, Alert, Form, Button } from "react-bootstrap";
+import React, { useState, useEffect, useRef } from "react";
+import { Card, Table, Spinner, Alert, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config/config";
-
-// yyyy-mm-dd → dd-mm-yyyy
-function formatDate(dateStr) {
-  const [year, month, day] = dateStr.split("-");
-  return `${day}-${month}-${year}`;
-}
 
 export default function FacturasTable() {
   const navigate = useNavigate();
 
-  // Rango por defecto: últimos 3 días
-  const today = new Date();
-  const todayFormatted = today.toISOString().split("T")[0];
-  const threeDaysAgo = new Date();
-  threeDaysAgo.setDate(today.getDate() - 3);
-  const threeDaysAgoFormatted = threeDaysAgo.toISOString().split("T")[0];
-
-  const [invoices, setInvoices] = useState([]);
-  const [fromDate, setFromDate] = useState(threeDaysAgoFormatted);
-  const [toDate, setToDate] = useState(todayFormatted);
+  // Estados para datos e interacción
+  const [ordersWithInvoice, setOrdersWithInvoice] = useState([]);
+  const [count, setCount] = useState(0);
+  const [skip, setSkip] = useState(0);
+  // Limitar cada lote a 20 para que el contenedor inicie mostrando alrededor de 20 facturas
+  const LIMIT = 20;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showFilter, setShowFilter] = useState(false);
 
-  // track loading state per factura
-  const [navLoading, setNavLoading] = useState({});
+  // Referencia al area de scroll (ahora será el Card.Body)
+  const containerRef = useRef();
 
-  // 1) Traer facturas
-  const fetchInvoices = async () => {
-    console.log("🔍 fetchInvoices desde", fromDate, "hasta", toDate);
-    if (!fromDate || !toDate) {
-      setError("Debe seleccionar ambas fechas");
-      return;
-    }
+  useEffect(() => {
+    loadMoreOrders(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Carga batch de órdenes con factura
+  const loadMoreOrders = async (newSkip) => {
     setLoading(true);
     setError(null);
 
     try {
-      const resp = await fetch(
-        `${API_URL}/api/facturas-emitidas?fromDate=${formatDate(
-          fromDate
-        )}&toDate=${formatDate(toDate)}`,
-        { headers: { Accept: "application/json" } }
-      );
-      console.log("📥 facturas-emitidas status:", resp.status);
+      const url =
+        `${API_URL.replace(/\/$/, "")}` +
+        `/api/get-orders-with-invoice?skip=${newSkip}&limit=${LIMIT}`;
+
+      const resp = await fetch(url, {
+        headers: { Accept: "application/json" },
+      });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      console.log("📄 facturas recibidas:", data);
-      const flat = data.flat().map((item) => item.__values__);
-      setInvoices(flat);
-      console.log("✅ invoices state set con", flat.length, "registros");
+      const { count: totalCount, orders } = await resp.json();
+
+      setCount(totalCount);
+      setOrdersWithInvoice((prev) =>
+        newSkip === 0 ? orders : [...prev, ...orders]
+      );
+      setSkip((prev) => prev + orders.length);
     } catch (err) {
-      console.error("❌ fetchInvoices error:", err);
+      console.error("Error fetching orders with invoice:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2) Cuando el usuario hace click en "Ver Orden"
+  // Manejo de scroll infinito
+  const handleScroll = () => {
+    if (
+      containerRef.current.scrollHeight - containerRef.current.scrollTop <=
+        containerRef.current.clientHeight + 50 &&
+      ordersWithInvoice.length < count &&
+      !loading
+    ) {
+      loadMoreOrders(skip);
+    }
+  };
 
-  // estilos tabla
-  const rowHeight = 48;
-  const tableHeight = 15 * rowHeight;
+  if (loading && ordersWithInvoice.length === 0) {
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" />
+      </div>
+    );
+  }
+  if (error && ordersWithInvoice.length === 0) {
+    return <Alert variant="danger">Error: {error}</Alert>;
+  }
 
   return (
     <Card className="shadow-sm border-primary w-100 mt-3">
-      <Card.Body>
-        <Card.Title as="h2" className="h5 mb-3">
-          Facturas Emitidas
+      {/* 
+        Se fija la altura del contenedor para mostrar aproximadamente 20 facturas,
+        y se habilita scroll interno.
+      */}
+      <Card.Body
+        ref={containerRef}
+        onScroll={handleScroll}
+        style={{ height: "800px", overflowY: "auto", padding: 0 }}
+      >
+        <Card.Title as="h2" className="h5 mb-3 p-3">
+          Órdenes Facturadas
         </Card.Title>
 
-        <Button
-          variant="secondary"
-          onClick={() => setShowFilter((s) => !s)}
-          className="mb-3"
-        >
-          {showFilter ? "Ocultar Filtro de Fechas" : "Mostrar Filtro de Fechas"}
-        </Button>
-
-        {showFilter && (
-          <Form className="mb-3">
-            <Form.Group className="mb-2">
-              <Form.Label>Fecha Inicio</Form.Label>
-              <Form.Control
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Fecha Fin</Form.Label>
-              <Form.Control
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-              />
-            </Form.Group>
-            <Button variant="primary" onClick={fetchInvoices}>
-              Buscar
-            </Button>
-          </Form>
+        {error && (
+          <Alert variant="danger" className="mx-3 mb-3">
+            {error}
+          </Alert>
         )}
 
-        {loading && (
-          <div className="text-center py-5">
-            <Spinner animation="border" />
-          </div>
-        )}
-        {error && <Alert variant="danger">{error}</Alert>}
-
-        {!loading && !error && invoices.length > 0 && (
-          <div
-            className="table-responsive"
+        <Table striped hover className="mb-0">
+          <thead
+            className="table-light"
             style={{
-              maxHeight: `${tableHeight}px`,
-              overflowY: "auto",
+              position: "sticky",
+              top: 0,
+              background: "white",
+              zIndex: 2,
             }}
           >
-            <Table striped hover className="mb-0">
-              <thead
-                className="table-light"
-                style={{ position: "sticky", top: 0, zIndex: 1 }}
-              >
-                <tr>
-                  <th>Fecha y hora</th>
-                  <th>ID Factura</th>
-                  <th>Monto</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td>{new Date(inv.createdAt).toLocaleString()}</td>
-                    <td>{inv.id}</td>
-                    <td>{inv.totalPrice}</td>
-                    <td>{inv.status}</td>
-                    <td>
-                      <Button
-                        size="sm"
-                        onClick={() => navigate(`/order-details/${inv.id}`)}
-                      >
-                        Ver Orden
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        )}
+            <tr>
+              <th className="px-2 py-2 text-start text-nowrap">
+                Fecha Factura
+              </th>
+              <th className="px-2 py-2 text-start text-nowrap">
+                ID Factura
+              </th>
+              <th className="px-2 py-2 text-start text-nowrap">
+                Monto Total
+              </th>
+              <th className="px-2 py-2 text-start text-nowrap">
+                Estado Factura
+              </th>
+              <th className="px-2 py-2 text-start text-nowrap">
+                ID Orden
+              </th>
+              <th className="px-2 py-2 text-start text-nowrap">
+                Acción
+              </th>
+            </tr>
+          </thead>
 
-        {!loading && !error && invoices.length === 0 && (
-          <p className="mb-0">
-            No hay facturas para mostrar. Selecciona fechas y presiona Buscar.
-          </p>
+          <tbody>
+            {ordersWithInvoice.map((o) => {
+              const inv = o.factura.__values__;
+              return (
+                <tr key={o.id}>
+                  <td className="px-2 py-2">
+                    {new Date(inv.createdAt).toLocaleString()}
+                  </td>
+                  <td className="px-2 py-2">{inv.id}</td>
+                  <td className="px-2 py-2">{inv.totalPrice}</td>
+                  <td className="px-2 py-2">{inv.status}</td>
+                  <td className="px-2 py-2">{o.id}</td>
+                  <td className="px-2 py-2">
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/order-details/${o.id}`)}
+                    >
+                      Ver Orden
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+
+            {loading && ordersWithInvoice.length > 0 && (
+              <tr>
+                <td colSpan="6" className="text-center py-2">
+                  <Spinner animation="border" size="sm" /> Cargando más…
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+
+        {!loading && !error && ordersWithInvoice.length === 0 && (
+          <p className="m-3">No hay órdenes facturadas para mostrar.</p>
         )}
       </Card.Body>
     </Card>

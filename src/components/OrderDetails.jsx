@@ -1,19 +1,19 @@
 // src/components/OrderDetails.jsx
 import React from "react";
-import { useParams } from "react-router-dom";
-import { Card, Table, Spinner, Alert } from "react-bootstrap";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, Table, Spinner, Alert, Button } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
-// Componente para mostrar detalles de una orden a partir de invoice_id
 export default function OrderDetails() {
-  const { invoice_id } = useParams();
+  const { orden_id } = useParams();
+  const navigate = useNavigate();
 
-  // Llamada al nuevo endpoint: Get Order From Invoice
+  // Llamada al endpoint GET /api/desplegar_ordenes/{orden_id}
   const {
     data: order,
     loading,
     error,
-  } = useApi(`/api/order-from-invoice/${invoice_id}`, { pollingInterval: 0 });
+  } = useApi(`/api/desplegar_ordenes/${orden_id}`, { pollingInterval: 0 });
 
   if (loading) {
     return (
@@ -23,39 +23,45 @@ export default function OrderDetails() {
     );
   }
   if (error) {
-    return <Alert variant="danger">Error cargando orden: {error}</Alert>;
+    return <Alert variant="danger">Error cargando la orden: {error}</Alert>;
   }
   if (!order) {
     return (
       <Alert variant="warning">
-        No se encontró la orden para la factura <strong>{invoice_id}</strong>.
+        No se encontró la orden para el ID <strong>{orden_id}</strong>.
       </Alert>
     );
   }
 
-  // Datos de la orden
   const {
     id,
-    sku,
     cliente,
     proveedor,
+    sku,
     cantidad,
+    despachado,
     precio_unitario,
-    creada,
-    vencimiento,
     estado,
-    actualizado,
-    facturado,
     historial,
+    creada,
+    actualizada,
+    vencimiento,
+    facturado,
     factura,
   } = order;
 
-  // Valores de la factura interna
   const invoiceValues = factura?.__values__ || {};
 
   return (
     <Card className="shadow-sm border-secondary mt-4">
       <Card.Body>
+        {/* Botón “Volver” */}
+        <div className="mb-3">
+          <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>
+            ← Volver
+          </Button>
+        </div>
+
         <Card.Title as="h2" className="h5 mb-3">
           Detalles de la Orden #{id}
         </Card.Title>
@@ -63,12 +69,8 @@ export default function OrderDetails() {
         <Table bordered size="sm" className="mb-4">
           <tbody>
             <tr>
-              <th>ID interno</th>
+              <th>ID</th>
               <td>{id}</td>
-            </tr>
-            <tr>
-              <th>SKU</th>
-              <td>{sku}</td>
             </tr>
             <tr>
               <th>Cliente</th>
@@ -79,8 +81,16 @@ export default function OrderDetails() {
               <td>{proveedor}</td>
             </tr>
             <tr>
+              <th>SKU</th>
+              <td>{sku}</td>
+            </tr>
+            <tr>
               <th>Cantidad</th>
               <td>{cantidad}</td>
+            </tr>
+            <tr>
+              <th>Despachado</th>
+              <td>{despachado}</td>
             </tr>
             <tr>
               <th>Precio Unitario</th>
@@ -96,7 +106,7 @@ export default function OrderDetails() {
             </tr>
             <tr>
               <th>Actualizada</th>
-              <td>{new Date(actualizado).toLocaleString()}</td>
+              <td>{new Date(actualizada).toLocaleString()}</td>
             </tr>
             <tr>
               <th>Estado</th>
