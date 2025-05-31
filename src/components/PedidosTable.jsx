@@ -70,14 +70,7 @@ export default function PedidosTable() {
                     <td className="px-2 py-2 text-nowrap">
                       {new Date(p.received_at).toLocaleString()}
                     </td>
-                    <td className="px-2 py-2">
-                      <Link
-                        to={`/pedido/${p.request_id}`}
-                        className="text-decoration-none"
-                      >
-                        Ver más
-                      </Link>
-                    </td>
+                    <td className="px-2 py-2"></td>
                   </tr>
                 ))
               )}
