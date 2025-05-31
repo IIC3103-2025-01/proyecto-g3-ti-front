@@ -1,38 +1,41 @@
 // src/hooks/useApi.js
 import { useEffect, useState, useRef } from "react";
+import { API_URL, BATCH_SIZE } from "../config/config";
 
 export function useApi(
-  endpoint,
+  path, // antes: "endpoint"
   {
-    options = {}, // fetch options extra
-    pollingInterval = 0, // ms entre peticiones (0 = no polling)
-    incremental = false, // si true, añade `?since=` para traer sólo cambios
-    mergeData = (prev, next) => next, // función para combinar prev + next
+    options = {},
+    pollingInterval = 0,
+    incremental = false,
+    mergeData = (prev, next) => next,
   } = {}
 ) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const controllerRef = useRef(null);
-  const lastRef = useRef(null); // marca de tiempo de la última actualización
+  const lastRef = useRef(null);
 
   useEffect(() => {
     let intervalId;
 
     const fetchData = async () => {
-      // abortar request anterior
-      if (controllerRef.current) {
-        controllerRef.current.abort();
-      }
+      // abort anterior
+      controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
 
       setLoading(true);
       setError(null);
 
-      // construir URL con `since` si es incremental
-      let url = endpoint;
+      // construye URL completa: si viene con http usa tal cual
+      const base = API_URL.replace(/\/$/, "");
+      let url = path.startsWith("http")
+        ? path
+        : `${base}${path.startsWith("/") ? path : `/${path}`}`;
+
+      // incremental?
       if (incremental && lastRef.current) {
         const sep = url.includes("?") ? "&" : "?";
         url += `${sep}since=${encodeURIComponent(lastRef.current)}`;
@@ -47,49 +50,29 @@ export function useApi(
           },
           ...options,
         });
-
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`Error ${res.status}: ${text || res.statusText}`);
         }
-
         const json = res.status === 204 ? null : await res.json();
-
-        // hacer merge de los datos en lugar de sobrescribir
         setData((prev) => mergeData(prev, json));
-
-        // actualizar la marca de tiempo (la API debe devolver `lastUpdated`)
         lastRef.current = json?.lastUpdated || new Date().toISOString();
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("useApi error:", err);
-          setError(err.message);
-        }
+        if (err.name !== "AbortError") setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    // primer fetch
     fetchData();
-
-    // setInterval sólo si pollingInterval > 0
-    if (pollingInterval > 0) {
+    if (pollingInterval > 0)
       intervalId = setInterval(fetchData, pollingInterval);
-    }
 
     return () => {
-      // cleanup al desmontar o cambiar deps
-      if (controllerRef.current) controllerRef.current.abort();
-      if (intervalId) clearInterval(intervalId);
+      controllerRef.current?.abort();
+      intervalId && clearInterval(intervalId);
     };
-  }, [
-    endpoint,
-    pollingInterval,
-    incremental,
-    // stringify options para que React compare correctamente
-    JSON.stringify(options),
-  ]);
+  }, [path, pollingInterval, incremental, JSON.stringify(options)]);
 
   return { data, loading, error };
 }

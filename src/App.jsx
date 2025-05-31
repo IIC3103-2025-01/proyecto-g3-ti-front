@@ -7,6 +7,7 @@ import OrdersTable from "./components/OrdersTable";
 import OrderDetails from "./components/OrderDetails";
 import PedidosTable from "./components/PedidosTable";
 import OrdersPerHourCard from "./components/OrdersPerHour";
+import FacturasTable from "./components/FacturesTable";
 import PedidosDetails from "./components/PedidosDetails";
 
 export default function App() {
@@ -29,15 +30,19 @@ export default function App() {
                   <OrdersPerHourCard />
                 </div>
                 <div className="mt-4">
+                  <OrdersTable />
+                </div>
+                <div className="mt-4">
+                  <FacturasTable />
+                </div>
+                <div className="mt-4">
                   <PedidosTable />
                 </div>
-                {/* <div className="mt-4">
-                  <OrdersTable />
-                </div> */}
               </>
             }
           />
-          <Route path="/pedido/:id" element={<OrderDetails />} />
+          {/* <Route path="/orden/:id" element={<OrderDetails />} /> */}
+          <Route path="/order-details/:orden_id" element={<OrderDetails />} />
         </Routes>
       </Container>
     </BrowserRouter>

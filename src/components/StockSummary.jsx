@@ -36,8 +36,21 @@ export default function StockSummary({ spaces }) {
     return <Alert variant="danger">Error cargando espacios: {error}</Alert>;
   }
 
+  // Altura aproximada para mostrar 3 tarjetas antes de scroll
+  const cardHeight = 130; // altura aproximada por tarjeta
+  const maxVisibleCards = 3; // número de tarjetas visibles antes de scroll
+  const containerHeight = data
+    ? Math.min(Object.keys(data).length, maxVisibleCards) * cardHeight
+    : 0;
+
   return (
-    <>
+    <div
+      style={{
+        maxHeight: containerHeight > 0 ? `${containerHeight}px` : "400px",
+        overflowY: "auto",
+        paddingRight: "5px", // espacio para la barra de desplazamiento
+      }}
+    >
       {Object.entries(data).map(([sku, info]) => (
         <Card key={sku} className="mb-3 border-secondary">
           <Card.Header className="d-flex justify-content-between">
@@ -53,7 +66,7 @@ export default function StockSummary({ spaces }) {
               return (
                 <ListGroup.Item
                   key={spaceId}
-                  className="px-0 py-1 d-flex justify-content-between"
+                  className="px-3 py-1 d-flex justify-content-between"
                 >
                   <small>{label}</small>
                   <Badge bg="light" text="dark">
@@ -65,6 +78,6 @@ export default function StockSummary({ spaces }) {
           </ListGroup>
         </Card>
       ))}
-    </>
+    </div>
   );
 }

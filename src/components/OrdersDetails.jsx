@@ -1,14 +1,17 @@
-// src/components/PedidosDetails.jsx
+// src/components/OrderDetails.jsx
 import React from "react";
 import { useParams } from "react-router-dom";
-import { Card, Table, Spinner, Alert, ListGroup } from "react-bootstrap";
+import { Card, Table, Spinner, Alert } from "react-bootstrap";
 import { useApi } from "../hooks/useApi";
 
 export default function OrderDetails() {
-  const { request_id } = useParams(); // recoge /pedido/:id
-  const { data, loading, error } = useApi(`/api/order/${order_id}`, {
-    pollingInterval: 0,
-  });
+  const { orden_id } = useParams(); // recoge /orden/:orden_id
+  const { data, loading, error } = useApi(
+    `/api/desplegar_ordenes/${orden_id}`,
+    {
+      pollingInterval: 0,
+    }
+  );
 
   if (loading) {
     return (
@@ -23,20 +26,19 @@ export default function OrderDetails() {
   if (!data) {
     return (
       <Alert variant="warning">
-        Orden con ID <strong>{request_id}</strong> no encontrado.
+        Orden con ID <strong>{orden_id}</strong> no encontrada.
       </Alert>
     );
   }
 
-  // Data: id, request_id, sku, quantity, group, checked_out, available_at,
-  //       created_at, received_at, status, product_ids:[…]
+  // Renombramos data a p para que se asemeje a la nomenclatura del snippet
   const p = data;
 
   return (
     <Card className="shadow-sm border-secondary mt-4">
       <Card.Body>
         <Card.Title as="h2" className="h5 mb-3">
-          Detalles de la Orden #{p.order_id}
+          Detalles de la Orden #{p.id}
         </Card.Title>
 
         <Table bordered size="sm" className="mb-3">
@@ -46,48 +48,96 @@ export default function OrderDetails() {
               <td>{p.id}</td>
             </tr>
             <tr>
-              <th>Request ID</th>
-              <td>{p.order_id}</td>
-            </tr>
-            <tr>
               <th>SKU</th>
               <td>{p.sku}</td>
             </tr>
             <tr>
+              <th>Cliente</th>
+              <td>{p.cliente}</td>
+            </tr>
+            <tr>
+              <th>Proveedor</th>
+              <td>{p.proveedor}</td>
+            </tr>
+            <tr>
               <th>Cantidad</th>
-              <td>{p.quantity}</td>
+              <td>{p.cantidad}</td>
             </tr>
             <tr>
-              <th>Estado</th>
-              <td>{p.status}</td>
+              <th>Precio Unitario</th>
+              <td>{p.precio_unitario}</td>
             </tr>
             <tr>
-              <th>Creado</th>
-              <td>{new Date(p.created_at).toLocaleString()}</td>
+              <th>Vencimiento</th>
+              <td>{new Date(p.vencimiento).toLocaleString()}</td>
             </tr>
             <tr>
-              <th>Recibido</th>
-              <td>{new Date(p.received_at).toLocaleString()}</td>
+              <th>Facturado</th>
+              <td>{p.facturado ? "Facturado" : "No facturado"}</td>
             </tr>
             <tr>
-              <th>Disponible en</th>
-              <td>{new Date(p.available_at).toLocaleString()}</td>
+              <td colSpan="2" className="border-top-0 p-3 bg-light">
+                <dl className="row mb-2">
+                  <dt className="col-sm-3">Estado</dt>
+                  <dd className="col-sm-9">{p.estado}</dd>
+                  <dt className="col-sm-3">Creada</dt>
+                  <dd className="col-sm-9">
+                    {new Date(p.creada).toLocaleString()}
+                  </dd>
+                  <dt className="col-sm-3">Actualizada</dt>
+                  <dd className="col-sm-9">
+                    {new Date(p.actualizada).toLocaleString()}
+                  </dd>
+                </dl>
+                <div>
+                  <strong>Historial:</strong>
+                  <Table size="sm" striped className="mb-0 mt-2">
+                    <thead>
+                      <tr>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {p.historial.map((h, i) => (
+                        <tr key={i}>
+                          <td>{h.nombre}</td>
+                          <td>{new Date(h.fecha).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+                {p.factura && (
+                  <Card className="mt-3">
+                    <Card.Header>Detalle de la Factura</Card.Header>
+                    <Card.Body>
+                      <dl className="row mb-0">
+                        <dt className="col-sm-4">Número</dt>
+                        <dd className="col-sm-8">{p.factura.numero}</dd>
+                        <dt className="col-sm-4">Fecha Emisión</dt>
+                        <dd className="col-sm-8">{p.factura.fecha_emision}</dd>
+                        <dt className="col-sm-4">Monto Total</dt>
+                        <dd className="col-sm-8">{p.factura.monto_total}</dd>
+                        <dt className="col-sm-4">Detalles</dt>
+                        <dd className="col-sm-8">
+                          <ul className="mb-0">
+                            {p.factura.detalles.map((d, j) => (
+                              <li key={j}>
+                                {d.descripcion} - {d.cantidad} x{" "}
+                                {d.precio_unitario}
+                              </li>
+                            ))}
+                          </ul>
+                        </dd>
+                      </dl>
+                    </Card.Body>
+                  </Card>
+                )}
+              </td>
             </tr>
           </tbody>
         </Table>
-
-        <Card.Subtitle className="mb-2">Productos incluidos</Card.Subtitle>
-        {p.product_ids.length === 0 ? (
-          <p className="text-muted">No hay productos asociados.</p>
-        ) : (
-          <ListGroup>
-            {p.product_ids.map((pid) => (
-              <ListGroup.Item key={pid} className="px-2 py-1">
-                {pid}
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        )}
       </Card.Body>
     </Card>
   );

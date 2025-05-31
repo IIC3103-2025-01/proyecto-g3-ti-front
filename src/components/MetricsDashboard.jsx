@@ -1,6 +1,6 @@
 // src/components/MetricsDashboard.jsx
 import React from "react";
-import { Row, Col, Spinner } from "react-bootstrap"; // <-- Spinner agregado
+import { Row, Col, Spinner } from "react-bootstrap";
 import { POLLING } from "../config/polling";
 import SpacesCard from "./SpacesCard";
 import StockCard from "./StockCard";
@@ -22,16 +22,39 @@ export default function MetricsDashboard() {
     );
   }
 
+  // Altura fija para todos los cards
+  const cardHeight = "500px";
+
+  // Estilo común para todas las columnas
+  const colStyle = {
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  // Estilo común para todos los cards
+  const cardStyle = {
+    height: cardHeight,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden", // Asegura que el contenido no se desborde
+  };
+
   return (
     <Row className="gy-4 align-items-stretch">
-      <Col md={4}>
-        <SpacesCard />
+      <Col md={4} style={colStyle}>
+        <div style={cardStyle}>
+          <SpacesCard />
+        </div>
       </Col>
-      <Col md={4}>
-        <StockCard spaces={spaces} />
+      <Col md={4} style={colStyle}>
+        <div style={cardStyle}>
+          <StockCard spaces={spaces} />
+        </div>
       </Col>
-      <Col md={4}>
-        <ObsoletosCard />
+      <Col md={4} style={colStyle}>
+        <div style={cardStyle}>
+          <ObsoletosCard />
+        </div>
       </Col>
     </Row>
   );
