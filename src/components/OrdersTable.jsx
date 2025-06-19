@@ -21,9 +21,14 @@ export default function OrdersTableEnhanced() {
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [stateFilter, setStateFilter] = useState("all");
+  const [channelFilter, setChannelFilter] = useState("all");
   const containerRef = useRef();
 
   // hook para estados únicos
+  const uniqueChannels = useMemo(
+    () => [...new Set(orders.map((o) => o.canal).filter(Boolean))],
+    [orders]
+  );
   const uniqueStates = useMemo(
     () => [...new Set(orders.map((o) => o.estado))],
     [orders]
@@ -70,35 +75,35 @@ export default function OrdersTableEnhanced() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // decision endpoint
-  const handleDecision = async (id, newState, confirmMsg) => {
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
-    // detect remote vs local
-    const isRemote = API_URL.includes("ordenes-compra");
-    const url = isRemote
-      ? `${API_URL}/ordenes/${id}/estado`
-      : `${API_URL}/api/ordenes/${id}/decision`;
+  // const handleDecision = async (id, newState, confirmMsg) => {
+  //   if (confirmMsg && !window.confirm(confirmMsg)) return;
+  //   // detect remote vs local
+  //   const isRemote = API_URL.includes("ordenes-compra");
+  //   const url = isRemote
+  //     ? `${API_URL}/ordenes/${id}/estado`
+  //     : `${API_URL}/api/ordenes/${id}/decision`;
 
-    try {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado: newState }),
-      });
-      if (!resp.ok) {
-        let msg = resp.statusText;
-        try {
-          const body = await resp.json();
-          msg = body.detail?.[0]?.msg || JSON.stringify(body);
-        } catch {}
-        throw new Error(msg);
-      }
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, estado: newState } : o))
-      );
-    } catch (err) {
-      alert("No se pudo cambiar el estado: " + err.message);
-    }
-  };
+  //   try {
+  //     const resp = await fetch(url, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ estado: newState }),
+  //     });
+  //     if (!resp.ok) {
+  //       let msg = resp.statusText;
+  //       try {
+  //         const body = await resp.json();
+  //         msg = body.detail?.[0]?.msg || JSON.stringify(body);
+  //       } catch {}
+  //       throw new Error(msg);
+  //     }
+  //     setOrders((prev) =>
+  //       prev.map((o) => (o.id === id ? { ...o, estado: newState } : o))
+  //     );
+  //   } catch (err) {
+  //     alert("No se pudo cambiar el estado: " + err.message);
+  //   }
+  // };
 
   // loading / error
   if (loading && orders.length === 0) {
@@ -114,7 +119,9 @@ export default function OrdersTableEnhanced() {
 
   // aplica filtro
   const displayed = orders.filter(
-    (o) => stateFilter === "all" || o.estado === stateFilter
+    (o) =>
+      (stateFilter === "all" || o.estado === stateFilter) &&
+      (channelFilter === "all" || o.canal === channelFilter)
   );
 
   return (
@@ -124,20 +131,37 @@ export default function OrdersTableEnhanced() {
           Últimas Órdenes
         </Card.Title>
 
-        <Form.Group className="mb-3" style={{ maxWidth: "300px" }}>
-          <Form.Label>Filtrar por estado:</Form.Label>
-          <Form.Select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-          >
-            <option value="all">Todos</option>
-            {uniqueStates.map((st) => (
-              <option key={st} value={st}>
-                {st.charAt(0).toUpperCase() + st.slice(1)}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+          <Form.Group className="mb-3" style={{ minWidth: "300px" }}>
+            <Form.Label>Filtrar por estado:</Form.Label>
+            <Form.Select
+              value={stateFilter}
+              onChange={(e) => setStateFilter(e.target.value)}
+            >
+              <option value="all">Todos</option>
+              {uniqueStates.map((st) => (
+                <option key={st} value={st}>
+                  {st.charAt(0).toUpperCase() + st.slice(1)}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3" style={{ minWidth: "300px" }}>
+            <Form.Label>Filtrar por canal:</Form.Label>
+            <Form.Select
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+            >
+              <option value="all">Todos</option>
+              {uniqueChannels.map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </div>
 
         <div
           className="table-responsive"
@@ -159,10 +183,11 @@ export default function OrdersTableEnhanced() {
                 {[
                   "SKU",
                   "ID",
+                  "Canal",
                   "Cantidad",
                   "Estado de la Orden",
                   "Estado Facturación",
-                  "Acciones",
+                  // "Acciones",
                 ].map((h) => (
                   <th key={h} className="px-2 py-2 text-start text-nowrap">
                     {h}
@@ -180,12 +205,13 @@ export default function OrdersTableEnhanced() {
                   >
                     <td className="px-2 py-2">{o.sku}</td>
                     <td className="px-2 py-2 text-nowrap">{o.id}</td>
+                    <td className="px-2 py-2">{o.canal}</td>
                     <td className="px-2 py-2">{o.cantidad}</td>
                     <td className="px-2 py-2">{o.estado}</td>
                     <td className="px-2 py-2">
                       {o.facturado ? "Facturado" : "No facturado"}
                     </td>
-                    <td className="px-2 py-2">
+                    {/* <td className="px-2 py-2">
                       <ButtonGroup size="sm">
                         {o.estado === "creada" && (
                           <>
@@ -221,7 +247,7 @@ export default function OrdersTableEnhanced() {
                           </Button>
                         )}
                       </ButtonGroup>
-                    </td>
+                    </td> */}
                   </tr>
                   {expanded[o.id] && (
                     <tr>
@@ -235,6 +261,8 @@ export default function OrdersTableEnhanced() {
                           <dd className="col-sm-9">{o.cliente}</dd>
                           <dt className="col-sm-3">Proveedor</dt>
                           <dd className="col-sm-9">{o.proveedor}</dd>
+                          <dt className="col-sm-3">Canal</dt>
+                          <dd className="col-sm-9">{o.canal}</dd>
                           <dt className="col-sm-3">Cantidad</dt>
                           <dd className="col-sm-9">{o.cantidad}</dd>
                           <dt className="col-sm-3">Precio Unitario</dt>
