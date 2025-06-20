@@ -11,8 +11,6 @@ import {
 import { Link } from "react-router-dom";
 import { API_URL, BATCH_SIZE } from "../config/config";
 
-// const BATCH_SIZE = 100;
-
 export default function OrdersTableEnhanced() {
   const [orders, setOrders] = useState([]);
   const [count, setCount] = useState(0);
@@ -24,7 +22,7 @@ export default function OrdersTableEnhanced() {
   const [channelFilter, setChannelFilter] = useState("all");
   const containerRef = useRef();
 
-  // hook para estados únicos
+  // hook para estados únicos (útil para los selectores)
   const uniqueChannels = useMemo(
     () => [...new Set(orders.map((o) => o.canal).filter(Boolean))],
     [orders]
@@ -34,7 +32,43 @@ export default function OrdersTableEnhanced() {
     [orders]
   );
 
-  // carga inicial
+  // Función para obtener órdenes con filtros
+  const fetchOrders = async (newSkip) => {
+    // Construir URL con parámetros de filtro
+    let url = `${API_URL}/api/desplegar_ordenes?skip=${newSkip}&limit=${BATCH_SIZE}`;
+
+    // Añadir filtros si no están en "all"
+    if (stateFilter !== "all") {
+      url += `&estado=${stateFilter}`;
+    }
+
+    if (channelFilter !== "all") {
+      url += `&canal=${channelFilter}`;
+    }
+
+    const resp = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!resp.ok) throw new Error("Error al obtener órdenes");
+    const { count, orders: data } = await resp.json();
+
+    setCount(count);
+    setOrders((prev) => (newSkip === 0 ? data : [...prev, ...data]));
+    setSkip((prev) => prev + data.length);
+  };
+
+  // Manejadores de cambio de filtros
+  const handleStateFilterChange = (e) => {
+    setStateFilter(e.target.value);
+    setSkip(0); // Reinicia la paginación
+    setOrders([]); // Limpia los datos actuales
+  };
+
+  const handleChannelFilterChange = (e) => {
+    setChannelFilter(e.target.value);
+    setSkip(0); // Reinicia la paginación
+    setOrders([]); // Limpia los datos actuales
+  };
+
+  // Efecto para carga inicial
   useEffect(() => {
     setLoading(true);
     fetchOrders(0)
@@ -42,20 +76,17 @@ export default function OrdersTableEnhanced() {
       .finally(() => setLoading(false));
   }, []);
 
-  // trae batch de órdenes
-  const fetchOrders = async (newSkip) => {
-    const resp = await fetch(
-      `${API_URL}/api/desplegar_ordenes?skip=${newSkip}&limit=${BATCH_SIZE}`,
-      { headers: { Accept: "application/json" } }
-    );
-    if (!resp.ok) throw new Error("Error al obtener órdenes");
-    const { count, orders: data } = await resp.json();
-    setCount(count);
-    setOrders((prev) => (newSkip === 0 ? data : [...prev, ...data]));
-    setSkip((prev) => prev + data.length);
-  };
+  // Efecto que observa cambios en los filtros
+  useEffect(() => {
+    setLoading(true);
+    setOrders([]); // Limpiar órdenes actuales
+    setSkip(0); // Reiniciar paginación
+    fetchOrders(0)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [stateFilter, channelFilter]); // Dependencias: filtros
 
-  // infinite scroll
+  // Infinite scroll
   const handleScroll = () => {
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
     if (
@@ -70,42 +101,11 @@ export default function OrdersTableEnhanced() {
     }
   };
 
-  // toggle detalle
+  // Toggle detalle
   const toggleExpand = (id) =>
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // decision endpoint
-  // const handleDecision = async (id, newState, confirmMsg) => {
-  //   if (confirmMsg && !window.confirm(confirmMsg)) return;
-  //   // detect remote vs local
-  //   const isRemote = API_URL.includes("ordenes-compra");
-  //   const url = isRemote
-  //     ? `${API_URL}/ordenes/${id}/estado`
-  //     : `${API_URL}/api/ordenes/${id}/decision`;
-
-  //   try {
-  //     const resp = await fetch(url, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ estado: newState }),
-  //     });
-  //     if (!resp.ok) {
-  //       let msg = resp.statusText;
-  //       try {
-  //         const body = await resp.json();
-  //         msg = body.detail?.[0]?.msg || JSON.stringify(body);
-  //       } catch {}
-  //       throw new Error(msg);
-  //     }
-  //     setOrders((prev) =>
-  //       prev.map((o) => (o.id === id ? { ...o, estado: newState } : o))
-  //     );
-  //   } catch (err) {
-  //     alert("No se pudo cambiar el estado: " + err.message);
-  //   }
-  // };
-
-  // loading / error
+  // Loading / error
   if (loading && orders.length === 0) {
     return (
       <div className="text-center py-5">
@@ -117,13 +117,6 @@ export default function OrdersTableEnhanced() {
     return <Alert variant="danger">Error: {error}</Alert>;
   }
 
-  // aplica filtro
-  const displayed = orders.filter(
-    (o) =>
-      (stateFilter === "all" || o.estado === stateFilter) &&
-      (channelFilter === "all" || o.canal === channelFilter)
-  );
-
   return (
     <Card className="shadow-sm border-primary w-100">
       <Card.Body>
@@ -134,10 +127,7 @@ export default function OrdersTableEnhanced() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
           <Form.Group className="mb-3" style={{ minWidth: "300px" }}>
             <Form.Label>Filtrar por estado:</Form.Label>
-            <Form.Select
-              value={stateFilter}
-              onChange={(e) => setStateFilter(e.target.value)}
-            >
+            <Form.Select value={stateFilter} onChange={handleStateFilterChange}>
               <option value="all">Todos</option>
               {uniqueStates.map((st) => (
                 <option key={st} value={st}>
@@ -151,7 +141,7 @@ export default function OrdersTableEnhanced() {
             <Form.Label>Filtrar por canal:</Form.Label>
             <Form.Select
               value={channelFilter}
-              onChange={(e) => setChannelFilter(e.target.value)}
+              onChange={handleChannelFilterChange}
             >
               <option value="all">Todos</option>
               {uniqueChannels.map((ch) => (
@@ -187,7 +177,6 @@ export default function OrdersTableEnhanced() {
                   "Cantidad",
                   "Estado de la Orden",
                   "Estado Facturación",
-                  // "Acciones",
                 ].map((h) => (
                   <th key={h} className="px-2 py-2 text-start text-nowrap">
                     {h}
@@ -196,7 +185,7 @@ export default function OrdersTableEnhanced() {
               </tr>
             </thead>
             <tbody>
-              {displayed.map((o) => (
+              {orders.map((o) => (
                 <React.Fragment key={o.id}>
                   <tr
                     className="align-middle"
@@ -211,43 +200,6 @@ export default function OrdersTableEnhanced() {
                     <td className="px-2 py-2">
                       {o.facturado ? "Facturado" : "No facturado"}
                     </td>
-                    {/* <td className="px-2 py-2">
-                      <ButtonGroup size="sm">
-                        {o.estado === "creada" && (
-                          <>
-                            <Button
-                              variant="success"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDecision(o.id, "aceptada", null);
-                              }}
-                            >
-                              Aceptar
-                            </Button>
-                            <Button
-                              variant="danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDecision(o.id, "rechazada", "¿Rechazar?");
-                              }}
-                            >
-                              Rechazar
-                            </Button>
-                          </>
-                        )}
-                        {o.estado === "aceptada" && (
-                          <Button
-                            variant="warning"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDecision(o.id, "anulada", "¿Anular?");
-                            }}
-                          >
-                            Anular
-                          </Button>
-                        )}
-                      </ButtonGroup>
-                    </td> */}
                   </tr>
                   {expanded[o.id] && (
                     <tr>

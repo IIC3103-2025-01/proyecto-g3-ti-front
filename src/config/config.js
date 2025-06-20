@@ -1,2 +1,2 @@
 export const API_URL = "";
-export const BATCH_SIZE = 20;
+export const BATCH_SIZE = 100;

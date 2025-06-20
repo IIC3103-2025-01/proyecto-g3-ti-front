@@ -6,6 +6,10 @@ import { API_URL } from "../config/config";
 
 // yyyy-mm-dd → dd-mm-yyyy
 function formatDate(dateStr) {
+  // Verifica si ya está en formato DD-MM-YYYY
+  if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) return dateStr;
+
+  // Suponiendo que dateStr es YYYY-MM-DD
   const [year, month, day] = dateStr.split("-");
   return `${day}-${month}-${year}`;
 }
@@ -51,9 +55,25 @@ export default function FacturasTable() {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       console.log("📄 facturas recibidas:", data);
-      const flat = data.flat().map((item) => item.__values__);
-      setInvoices(flat);
-      console.log("✅ invoices state set con", flat.length, "registros");
+
+      // Verifica la estructura antes de procesar
+      if (!Array.isArray(data) || data.some((item) => item === null)) {
+        setError("La respuesta del servidor no tiene el formato esperado");
+        return;
+      }
+
+      // Intenta extraer los datos de manera segura
+      try {
+        const flat = data
+          .flat()
+          .filter(Boolean)
+          .map((item) => item.__values__);
+        console.log("Datos procesados:", flat);
+        setInvoices(flat);
+      } catch (err) {
+        console.error("Error al procesar datos:", err);
+        setError("Error al procesar los datos recibidos");
+      }
     } catch (err) {
       console.error("❌ fetchInvoices error:", err);
       setError(err.message);
