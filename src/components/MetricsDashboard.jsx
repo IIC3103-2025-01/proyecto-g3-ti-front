@@ -5,6 +5,8 @@ import { POLLING } from "../config/polling";
 import SpacesCard from "./SpacesCard";
 import StockCard from "./StockCard";
 import ObsoletosCard from "./ObsoletosCard";
+import BankStatementCard from "./BankStatementCard";
+
 import { useApi } from "../hooks/useApi";
 
 export default function MetricsDashboard() {
@@ -54,6 +56,11 @@ export default function MetricsDashboard() {
       <Col md={4} style={colStyle}>
         <div style={cardStyle}>
           <ObsoletosCard />
+        </div>
+      </Col>
+      <Col md={4} style={colStyle}>
+        <div style={cardStyle}>
+          <BankStatementCard />
         </div>
       </Col>
     </Row>

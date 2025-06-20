@@ -5,4 +5,5 @@ export const POLLING = {
   OBSOLETOS: 300000,
   PEDIDOS: 300000,
   ORDENES: 300000,
+  BANK: 660000, //  minutos 11 minutos
 };
