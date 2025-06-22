@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Container, Navbar } from "react-bootstrap";
 
 import MetricsDashboard from "./components/MetricsDashboard";
-import MetricsDashboard_2 from "./components/MetricsDashboard_2";
 import OrdersTable from "./components/OrdersTable";
 import OrderDetails from "./components/OrderDetails";
 import PedidosTable from "./components/PedidosTable";
