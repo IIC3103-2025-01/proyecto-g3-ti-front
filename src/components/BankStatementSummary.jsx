@@ -1,5 +1,5 @@
 // src/components/BankStatementSummary.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
   Badge,
@@ -18,81 +18,59 @@ export default function BankStatementSummary() {
   const [error, setError] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Fechas por defecto (afectan la carga inicial y el formulario)
+  // Fechas por defecto (23-06-2025 al 25-06-2025)
   const [fromDate, setFromDate] = useState("2025-06-23");
   const [toDate, setToDate] = useState("2025-06-25");
 
+  // Función simplificada para obtener datos
   const fetchBalance = useCallback(
-    async (params = {}) => {
+    async (option = "default") => {
       setLoading(true);
       setError(null);
 
       try {
-        let from, to;
+        let requestBody = {};
 
-        // --- INICIO DE LA LÓGICA MODIFICADA ---
-        // Determinar las fechas a usar en formato YYYY-MM-DD
-        if (params.useToday) {
+        if (option === "lastDays") {
+          // Últimos 2 días hasta hoy
           const today = new Date();
           const todayStr = today.toISOString().split("T")[0];
-          from = todayStr;
-          to = todayStr; // Para "hoy", la fecha de inicio y fin es la misma
-        } else if (params.usePreviousDays) {
-          const today = new Date();
-          const todayStr = today.toISOString().split("T")[0];
+
           const twoDaysAgo = new Date();
           twoDaysAgo.setDate(today.getDate() - 2);
           const twoDaysAgoStr = twoDaysAgo.toISOString().split("T")[0];
-          from = twoDaysAgoStr;
-          to = todayStr;
-        } else if (params.useCustomDates) {
-          from = fromDate;
-          to = toDate;
+
+          // Formatear fechas a DD-MM-YYYY
+          requestBody.fromDate = twoDaysAgoStr.split("-").reverse().join("-");
+          requestBody.toDate = todayStr.split("-").reverse().join("-");
+        } else if (option === "today") {
+          // Solo hoy
+          const today = new Date();
+          const todayStr = today.toISOString().split("T")[0];
+          const formattedToday = todayStr.split("-").reverse().join("-");
+
+          requestBody.fromDate = formattedToday;
+          requestBody.toDate = formattedToday;
+        } else if (option === "custom") {
+          // Usar fechas personalizadas
+          requestBody.fromDate = fromDate.split("-").reverse().join("-");
+          requestBody.toDate = toDate.split("-").reverse().join("-");
         }
-        // Si no se pasa ningún parámetro (en la carga inicial), 'from' y 'to' serán undefined,
-        // y la API usará sus valores por defecto.
+        // Si es 'default', no se envían parámetros - la API usará sus valores por defecto
 
-        // --- FIN DE LA LÓGICA MODIFICADA ---
-
-        // 1. Formatear las fechas a DD-MM-YYYY para la URL si existen
-        const fromFormatted = from
-          ? from.split("-").reverse().join("-")
-          : undefined;
-        const toFormatted = to ? to.split("-").reverse().join("-") : undefined;
-
-        // 2. Construir los parámetros de consulta (query params)
-        const queryParams = new URLSearchParams();
-        if (fromFormatted) queryParams.append("fromDate", fromFormatted);
-        if (toFormatted) queryParams.append("toDate", toFormatted);
-
-        // 3. Crear la URL final con los parámetros
-        const url = `${API_URL}/api/balance?${queryParams.toString()}`;
-        console.log("Enviando solicitud a la URL:", url);
-
-        // 4. Configurar la solicitud POST (corregida en el paso anterior para 'Bad Request')
-        const requestOptions = {
+        const response = await fetch(`${API_URL}/api/balance`, {
           method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({}),
-        };
-
-        const response = await fetch(url, requestOptions);
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `HTTP ${response.status} ${response.statusText}: ${errorText}`
-          );
+          throw new Error(`Error: ${response.status}`);
         }
 
         const result = await response.json();
-        console.log("Datos recibidos:", result);
         setData(result);
       } catch (err) {
-        console.error("Error en fetchBalance:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -101,17 +79,12 @@ export default function BankStatementSummary() {
     [fromDate, toDate]
   );
 
-  // Cargar datos al montar el componente (usa los defaults de la API)
-  React.useEffect(() => {
+  // Cargar datos al iniciar
+  useEffect(() => {
     fetchBalance();
   }, [fetchBalance]);
 
-  // Manejar consulta con fechas personalizadas
-  const handleCustomDateSearch = (e) => {
-    e.preventDefault();
-    fetchBalance({ useCustomDates: true });
-  };
-
+  // Si estamos cargando inicialmente
   if (loading && !data) {
     return (
       <div className="text-center py-2">
@@ -120,29 +93,12 @@ export default function BankStatementSummary() {
     );
   }
 
-  if (error && error.includes("429")) {
-    return (
-      <Alert variant="warning">
-        🍵 Demasiadas peticiones. Por favor espera unos segundos antes de
-        reintentar.
-      </Alert>
-    );
-  }
-
-  if (error && error.includes("500")) {
-    return (
-      <Alert variant="warning">
-        🤨 El servidor encontró un problema. Espera un momentito👌
-      </Alert>
-    );
-  }
-
+  // Si hay errores
   if (error) {
-    return (
-      <Alert variant="danger">Error cargando datos financieros: {error}</Alert>
-    );
+    return <Alert variant="danger">Error: {error}</Alert>;
   }
 
+  // Si no hay datos
   if (!data) {
     return (
       <div className="text-center py-2">
@@ -151,11 +107,12 @@ export default function BankStatementSummary() {
     );
   }
 
+  // Extraer datos
   const { deuda, egresos, ingresos, balance } = data;
 
   return (
-    <div style={{ maxHeight: "400px", overflowY: "auto", paddingRight: "5px" }}>
-      {/* Selector de fechas */}
+    <div style={{ height: "100%", overflowY: "auto", paddingRight: "5px" }}>
+      {/* Filtro de fechas */}
       <Card className="mb-3 border-info">
         <Card.Header className="d-flex justify-content-between bg-info text-white">
           <strong>Filtrar por fechas</strong>
@@ -167,9 +124,15 @@ export default function BankStatementSummary() {
             {showDatePicker ? "Ocultar" : "Mostrar"}
           </Button>
         </Card.Header>
+
         {showDatePicker && (
           <Card.Body className="py-2">
-            <Form onSubmit={handleCustomDateSearch}>
+            <Form
+              onSubmit={(e) => {
+                e.preventDefault();
+                fetchBalance("custom");
+              }}
+            >
               <Row>
                 <Col md={5}>
                   <Form.Group className="mb-2">
@@ -202,12 +165,11 @@ export default function BankStatementSummary() {
                   </Button>
                 </Col>
               </Row>
-              {/* --- INICIO DE BOTONES MODIFICADOS --- */}
               <div className="d-flex justify-content-end">
                 <Button
                   variant="outline-secondary"
                   size="sm"
-                  onClick={() => fetchBalance({ usePreviousDays: true })}
+                  onClick={() => fetchBalance("lastDays")}
                   disabled={loading}
                   className="me-2"
                 >
@@ -216,13 +178,12 @@ export default function BankStatementSummary() {
                 <Button
                   variant="outline-secondary"
                   size="sm"
-                  onClick={() => fetchBalance({ useToday: true })}
+                  onClick={() => fetchBalance("today")}
                   disabled={loading}
                 >
                   Consultar Hoy
                 </Button>
               </div>
-              {/* --- FIN DE BOTONES MODIFICADOS --- */}
             </Form>
           </Card.Body>
         )}
@@ -274,7 +235,7 @@ export default function BankStatementSummary() {
         </Card.Body>
       </Card>
 
-      {/* Tarjeta de Saldo en Caja */}
+      {/* Tarjeta de Balance */}
       <Card className="mb-3 border-primary">
         <Card.Header className="d-flex justify-content-between bg-primary text-white">
           <strong>Saldo en Caja</strong>

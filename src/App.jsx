@@ -3,12 +3,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Container, Navbar } from "react-bootstrap";
 
 import MetricsDashboard from "./components/MetricsDashboard";
+import MetricsDashboard_2 from "./components/MetricsDashboard_2";
 import OrdersTable from "./components/OrdersTable";
 import OrderDetails from "./components/OrderDetails";
 import PedidosTable from "./components/PedidosTable";
-import OrdersPerHourCard from "./components/OrdersPerHour";
 import FacturasTable from "./components/FacturesTable";
-import BankStatementCard from "./components/BankStatementCard";
 
 import PedidosDetails from "./components/PedidosDetails";
 
@@ -27,13 +26,7 @@ export default function App() {
             path="/"
             element={
               <>
-                <MetricsDashboard />
-                <div className="mt-4">
-                  <OrdersPerHourCard />
-                </div>
-                <div className="mt-4">
-                  <BankStatementCard />
-                </div>
+                <MetricsDashboard /> {/* Usa solo un dashboard */}
                 <div className="mt-4">
                   <OrdersTable />
                 </div>
@@ -46,7 +39,6 @@ export default function App() {
               </>
             }
           />
-          {/* <Route path="/orden/:id" element={<OrderDetails />} /> */}
           <Route path="/order-details/:invoice_id" element={<OrderDetails />} />
         </Routes>
       </Container>
