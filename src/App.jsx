@@ -8,6 +8,8 @@ import OrderDetails from "./components/OrderDetails";
 import PedidosTable from "./components/PedidosTable";
 import OrdersPerHourCard from "./components/OrdersPerHour";
 import FacturasTable from "./components/FacturesTable";
+import BankStatementCard from "./components/BankStatementCard";
+
 import PedidosDetails from "./components/PedidosDetails";
 
 export default function App() {
@@ -28,6 +30,9 @@ export default function App() {
                 <MetricsDashboard />
                 <div className="mt-4">
                   <OrdersPerHourCard />
+                </div>
+                <div className="mt-4">
+                  <BankStatementCard />
                 </div>
                 <div className="mt-4">
                   <OrdersTable />
