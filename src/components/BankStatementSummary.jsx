@@ -12,60 +12,90 @@ import {
 } from "react-bootstrap";
 import { API_URL } from "../config/config";
 
+// Función helper para formatear fechas de YYYY-MM-DD (del input) a DD-MM-YYYY (para la API)
+const formatDateForApi = (dateString) => {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}-${month}-${year}`;
+};
+
+// Sub-componente para las tarjetas de estadísticas
+const StatCard = ({ title, data, variant, showCount = true }) => {
+  const value = data?.sum ?? 0;
+  const count = data?.count ?? 0;
+  const isWarning = variant === "warning";
+
+  return (
+    <Card className={`mb-3 border-${variant}`}>
+      <Card.Header
+        className={`d-flex justify-content-between bg-${variant} ${
+          isWarning ? "text-dark" : "text-white"
+        }`}
+      >
+        <strong>{title}</strong>
+        {showCount && (
+          <Badge bg="light" text={isWarning ? "dark" : variant}>
+            {count} facturas
+          </Badge>
+        )}
+      </Card.Header>
+      <Card.Body className="py-2">
+        <h3 className={`m-0 text-${variant}`}>
+          {new Intl.NumberFormat("es-CL", {
+            style: "currency",
+            currency: "CLP",
+          }).format(value)}
+        </h3>
+      </Card.Body>
+    </Card>
+  );
+};
+
 export default function BankStatementSummary() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Fechas por defecto (23-06-2025 al 25-06-2025)
+  // Fechas en el estado del componente, formato YYYY-MM-DD para el input type="date"
   const [fromDate, setFromDate] = useState("2025-06-23");
   const [toDate, setToDate] = useState("2025-06-25");
 
-  // Función simplificada para obtener datos
   const fetchBalance = useCallback(
     async (option = "default") => {
       setLoading(true);
       setError(null);
 
       try {
-        let requestBody = {};
+        let fromDateStr, toDateStr;
 
-        if (option === "lastDays") {
-          // Últimos 2 días hasta hoy
-          const today = new Date();
-          const todayStr = today.toISOString().split("T")[0];
-
-          const twoDaysAgo = new Date();
-          twoDaysAgo.setDate(today.getDate() - 2);
-          const twoDaysAgoStr = twoDaysAgo.toISOString().split("T")[0];
-
-          // Formatear fechas a DD-MM-YYYY
-          requestBody.fromDate = twoDaysAgoStr.split("-").reverse().join("-");
-          requestBody.toDate = todayStr.split("-").reverse().join("-");
-        } else if (option === "today") {
-          // Solo hoy
-          const today = new Date();
-          const todayStr = today.toISOString().split("T")[0];
-          const formattedToday = todayStr.split("-").reverse().join("-");
-
-          requestBody.fromDate = formattedToday;
-          requestBody.toDate = formattedToday;
-        } else if (option === "custom") {
-          // Usar fechas personalizadas
-          requestBody.fromDate = fromDate.split("-").reverse().join("-");
-          requestBody.toDate = toDate.split("-").reverse().join("-");
+        if (option === "custom") {
+          fromDateStr = formatDateForApi(fromDate);
+          toDateStr = formatDateForApi(toDate);
+        } else {
+          // Caso "default" usará las fechas del estado
+          fromDateStr = formatDateForApi(fromDate);
+          toDateStr = formatDateForApi(toDate);
         }
-        // Si es 'default', no se envían parámetros - la API usará sus valores por defecto
 
-        const response = await fetch(`${API_URL}/api/balance`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
+        // Construir la URL con los parámetros de query
+        const url = `${API_URL}/api/balance?fromDate=${fromDateStr}&toDate=${toDateStr}`;
+
+        console.log("🚀 Llamando al endpoint con la URL:", url);
+
+        // Realizar la petición GET
+        const response = await fetch(url, {
+          method: "GET", // <-- MÉTODO CAMBIADO A GET
+          headers: { Accept: "application/json" },
         });
 
         if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
+          const errorData = await response.json();
+          const errorDetail =
+            errorData.detail?.[0]?.msg ||
+            JSON.stringify(errorData.detail) ||
+            response.statusText;
+          throw new Error(`Error ${response.status}: ${errorDetail}`);
         }
 
         const result = await response.json();
@@ -79,178 +109,111 @@ export default function BankStatementSummary() {
     [fromDate, toDate]
   );
 
-  // Cargar datos al iniciar
+  // Carga inicial de datos al montar el componente
   useEffect(() => {
     fetchBalance();
-  }, [fetchBalance]);
+  }, []);
 
-  // Si estamos cargando inicialmente
-  if (loading && !data) {
+  if (error)
     return (
-      <div className="text-center py-2">
-        <Spinner animation="border" size="sm" />
+      <Alert variant="danger">
+        Error al cargar el balance: {error.message}
+      </Alert>
+    );
+  if (!data && loading)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" />
       </div>
     );
-  }
+  if (!data)
+    return <Alert variant="info">No hay datos de balance para mostrar.</Alert>;
 
-  // Si hay errores
-  if (error) {
-    return <Alert variant="danger">Error: {error}</Alert>;
-  }
-
-  // Si no hay datos
-  if (!data) {
-    return (
-      <div className="text-center py-2">
-        <Spinner animation="border" size="sm" />
-      </div>
-    );
-  }
-
-  // Extraer datos
   const { deuda, egresos, ingresos, balance } = data;
 
   return (
     <div style={{ height: "100%", overflowY: "auto", paddingRight: "5px" }}>
-      {/* Filtro de fechas */}
       <Card className="mb-3 border-info">
-        <Card.Header className="d-flex justify-content-between bg-info text-white">
-          <strong>Filtrar por fechas</strong>
-          <Button
-            variant="light"
-            size="sm"
-            onClick={() => setShowDatePicker(!showDatePicker)}
-          >
-            {showDatePicker ? "Ocultar" : "Mostrar"}
-          </Button>
+        <Card.Header className="d-flex justify-content-between align-items-center bg-info text-white">
+          <strong>Resumen Financiero</strong>
         </Card.Header>
-
-        {showDatePicker && (
-          <Card.Body className="py-2">
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault();
-                fetchBalance("custom");
-              }}
-            >
-              <Row>
-                <Col md={5}>
-                  <Form.Group className="mb-2">
-                    <Form.Label>Desde:</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={5}>
-                  <Form.Group className="mb-2">
-                    <Form.Label>Hasta:</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={2} className="d-flex align-items-end">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="mb-2 w-100"
-                    disabled={loading}
-                  >
-                    Buscar
-                  </Button>
-                </Col>
-              </Row>
-              <div className="d-flex justify-content-end">
+        <Card.Body>
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              fetchBalance("custom");
+            }}
+          >
+            <Row className="align-items-end">
+              <Col md={5}>
+                <Form.Group>
+                  <Form.Label className="mb-1 small">Desde:</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    size="sm"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={5}>
+                <Form.Group>
+                  <Form.Label className="mb-1 small">Hasta:</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    size="sm"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={2}>
                 <Button
-                  variant="outline-secondary"
+                  type="submit"
+                  variant="primary"
+                  className="w-100"
                   size="sm"
-                  onClick={() => fetchBalance("lastDays")}
-                  disabled={loading}
-                  className="me-2"
-                >
-                  Últimos 2 días
-                </Button>
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  onClick={() => fetchBalance("today")}
                   disabled={loading}
                 >
-                  Consultar Hoy
+                  {loading ? (
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    "Buscar"
+                  )}
                 </Button>
-              </div>
-            </Form>
-          </Card.Body>
-        )}
-      </Card>
-
-      {/* Indicador de carga */}
-      {loading && (
-        <div className="text-center py-2 mb-3">
-          <Spinner animation="border" size="sm" /> Actualizando datos...
-        </div>
-      )}
-
-      {/* Tarjeta de Deuda */}
-      <Card className="mb-3 border-danger">
-        <Card.Header className="d-flex justify-content-between bg-danger text-white">
-          <strong>Deuda</strong>
-          <Badge bg="light" text="danger">
-            {deuda?.count || 0} facturas
-          </Badge>
-        </Card.Header>
-        <Card.Body className="py-2">
-          <h3 className="text-danger m-0">{deuda?.sum || 0}</h3>
+              </Col>
+            </Row>
+          </Form>
         </Card.Body>
       </Card>
 
-      {/* Tarjeta de Egresos */}
-      <Card className="mb-3 border-warning">
-        <Card.Header className="d-flex justify-content-between bg-warning text-dark">
-          <strong>Egresos</strong>
-          <Badge bg="light" text="dark">
-            {egresos?.count || 0} facturas
-          </Badge>
-        </Card.Header>
-        <Card.Body className="py-2">
-          <h3 className="text-warning m-0">{egresos?.sum || 0}</h3>
-        </Card.Body>
-      </Card>
-
-      {/* Tarjeta de Ingresos */}
-      <Card className="mb-3 border-success">
-        <Card.Header className="d-flex justify-content-between bg-success text-white">
-          <strong>Ingresos</strong>
-          <Badge bg="light" text="success">
-            {ingresos?.count || 0} facturas
-          </Badge>
-        </Card.Header>
-        <Card.Body className="py-2">
-          <h3 className="text-success m-0">{ingresos?.sum || 0}</h3>
-        </Card.Body>
-      </Card>
-
-      {/* Tarjeta de Balance */}
-      <Card className="mb-3 border-primary">
-        <Card.Header className="d-flex justify-content-between bg-primary text-white">
-          <strong>Saldo en Caja</strong>
-          <Badge bg="light" text="primary">
-            Balance
-          </Badge>
-        </Card.Header>
-        <Card.Body className="py-2">
-          <h3
-            className={`m-0 ${balance >= 0 ? "text-success" : "text-danger"}`}
-          >
-            {balance}
-          </h3>
-        </Card.Body>
-      </Card>
+      <StatCard
+        title="Deuda (Facturas por Pagar)"
+        data={deuda}
+        variant="danger"
+      />
+      <StatCard
+        title="Egresos (Facturas Pagadas)"
+        data={egresos}
+        variant="warning"
+      />
+      <StatCard
+        title="Ingresos (Facturas Emitidas)"
+        data={ingresos}
+        variant="success"
+      />
+      <StatCard
+        title="Saldo en Caja"
+        data={{ sum: balance }} // Envolver el valor en un objeto con propiedad 'sum'
+        variant={balance >= 0 ? "primary" : "danger"} // Color rojo si es negativo
+        showCount={false}
+      />
     </div>
   );
 }
